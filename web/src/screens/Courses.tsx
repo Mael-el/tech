@@ -1,54 +1,37 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Icon } from '../components/Icon'
-import { Btn, Card, Chip, EmptyState, Progress, SectionTitle, scrollContentTop } from '../components/ui'
-import {
-  courseById,
-  domainById,
-  lessonsFor,
-  seed,
-  useApp,
-} from '../store'
+import { Btn, Card, Chip, EmptyState, Progress, SectionTitle } from '../components/ui'
+import { courseById, domainById, lessonsFor, seed, useApp } from '../store'
 import type { Course, Lesson } from '../types'
 
 export function CoursesScreen({
-  openCourseId,
-  onCourseConsumed,
-  onImmersive,
+  courseId,
+  lessonId,
+  onOpenCourse,
+  onOpenLesson,
+  onBack,
   onOpenLive,
 }: {
-  openCourseId: string | null
-  onCourseConsumed: () => void
-  onImmersive: (value: boolean) => void
+  courseId: string | null
+  lessonId: string | null
+  onOpenCourse: (id: string) => void
+  onOpenLesson: (courseId: string, lessonId: string) => void
+  onBack: () => void
   onOpenLive: (title: string, instructor: string) => void
 }) {
   const { state, dispatch, notify } = useApp()
   const [domain, setDomain] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [course, setCourse] = useState<Course | null>(null)
-  const [lesson, setLesson] = useState<Lesson | null>(null)
   const [selected, setSelected] = useState<number | null>(null)
   const [submitted, setSubmitted] = useState(false)
 
-  useEffect(() => {
-    if (!openCourseId) return
-    const target = courseById(openCourseId)
-    if (target) {
-      setCourse(target)
-      setLesson(null)
-      setDomain(null)
-      setSearch('')
-      onCourseConsumed()
-    }
-  }, [openCourseId, onCourseConsumed])
+  const course: Course | null = courseId ? courseById(courseId) ?? null : null
+  const lesson: Lesson | null = lessonId ? seed.lessons.find((l) => l.id === lessonId) ?? null : null
 
   useEffect(() => {
-    scrollContentTop()
-  }, [course, lesson])
-
-  useEffect(() => {
-    onImmersive(Boolean(lesson))
-    return () => onImmersive(false)
-  }, [lesson, onImmersive])
+    setSelected(null)
+    setSubmitted(false)
+  }, [lessonId])
 
   const courses = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -63,21 +46,11 @@ export function CoursesScreen({
     })
   }, [domain, search])
 
-  const closeCourse = () => {
-    setCourse(null)
-    setLesson(null)
-  }
-
-  const openLesson = (l: Lesson) => {
-    setLesson(l)
-    setSelected(null)
-    setSubmitted(false)
-  }
-
   const submitQuiz = () => {
     if (!lesson || selected === null || submitted) return
     setSubmitted(true)
     const isCorrect = selected === lesson.quizCorrectIndex
+    dispatch({ type: 'QUIZ_ANSWER', correct: isCorrect })
     if (isCorrect) {
       const already = state.completedLessons.includes(lesson.id)
       dispatch({ type: 'COMPLETE_LESSON', lessonId: lesson.id, courseId: lesson.courseId })
@@ -96,17 +69,30 @@ export function CoursesScreen({
     const isCorrect = submitted && selected === lesson.quizCorrectIndex
     const isWrong = submitted && selected !== lesson.quizCorrectIndex
     const isDone = state.completedLessons.includes(lesson.id)
+    const note = state.notes[lesson.id] ?? ''
+    const isFavorite = state.favorites.courses.includes(lesson.courseId)
 
     return (
       <div className="screen lesson">
         <div className="lesson-top">
-          <button type="button" className="icon-btn" onClick={() => setLesson(null)} aria-label="Retour au cours">
+          <button type="button" className="icon-btn" onClick={() => onOpenCourse(lesson.courseId)} aria-label="Retour au cours">
             <Icon name="back" size={20} />
           </button>
           <div>
             <span className="eyebrow">{domainById(courseOfLesson.domainId).label}</span>
             <strong>{courseOfLesson.title}</strong>
           </div>
+          <button
+            type="button"
+            className={`icon-btn ${isFavorite ? 'fav-on' : ''}`}
+            aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            onClick={() => {
+              dispatch({ type: 'TOGGLE_FAV_COURSE', courseId: lesson.courseId })
+              notify(isFavorite ? 'Cours retiré des favoris.' : 'Cours ajouté aux favoris.')
+            }}
+          >
+            <Icon name="star" size={18} filled={isFavorite} />
+          </button>
           {isDone && <span className="done-pill"><Icon name="check" size={13} /> validée</span>}
         </div>
 
@@ -174,17 +160,30 @@ export function CoursesScreen({
                 </Btn>
               )}
               {isCorrect && next && (
-                <Btn full icon="next" onClick={() => openLesson(next)}>
+                <Btn full icon="next" onClick={() => onOpenLesson(next.courseId, next.id)}>
                   Leçon suivante
                 </Btn>
               )}
               {isCorrect && !next && (
-                <Btn full icon="check" onClick={() => setLesson(null)}>
+                <Btn full icon="check" onClick={() => onOpenCourse(lesson.courseId)}>
                   Terminer le cours
                 </Btn>
               )}
             </div>
           )}
+        </Card>
+
+        <Card className="notes">
+          <div className="notes-head">
+            <span className="eyebrow"><Icon name="code" size={13} /> Mes notes</span>
+            <span className="muted small">{note.length} caractères · sauvegarde locale</span>
+          </div>
+          <textarea
+            value={note}
+            onChange={(e) => dispatch({ type: 'SET_NOTE', lessonId: lesson.id, text: e.target.value })}
+            placeholder="Idée clé, exemple à retenir, question à poser au mentor…"
+            rows={3}
+          />
         </Card>
 
         {isDone && !isCorrect && (
@@ -200,12 +199,28 @@ export function CoursesScreen({
     const domainInfo = domainById(course.domainId)
     const enrolled = state.enrolled.includes(course.id)
     const progress = state.progress[course.id] ?? 0
+    const favorite = state.favorites.courses.includes(course.id)
+    const completed = lessons.filter((l) => state.completedLessons.includes(l.id)).length
+    const nextLesson = lessons.find((l) => !state.completedLessons.includes(l.id))
 
     return (
       <div className="screen">
-        <button type="button" className="back-link" onClick={closeCourse}>
-          <Icon name="back" size={16} /> Tous les cours
-        </button>
+        <div className="detail-actions">
+          <button type="button" className="back-link" onClick={onBack}>
+            <Icon name="back" size={16} /> Tous les cours
+          </button>
+          <button
+            type="button"
+            className={`icon-btn ${favorite ? 'fav-on' : ''}`}
+            aria-label={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            onClick={() => {
+              dispatch({ type: 'TOGGLE_FAV_COURSE', courseId: course.id })
+              notify(favorite ? 'Cours retiré des favoris.' : 'Cours ajouté aux favoris.')
+            }}
+          >
+            <Icon name="star" size={18} filled={favorite} />
+          </button>
+        </div>
 
         <div className="course-hero" style={{ background: `linear-gradient(135deg, ${domainInfo.color}, ${domainInfo.color}cc)` }}>
           <span className="course-hero-domain">{domainInfo.label}</span>
@@ -237,7 +252,16 @@ export function CoursesScreen({
               S'inscrire à ce cours
             </Btn>
           ) : (
-            <p className="enrolled-note"><Icon name="check" size={14} /> Vous êtes inscrit à ce cours.</p>
+            <div className="course-cta">
+              <p className="enrolled-note">
+                <Icon name="check" size={14} /> Inscrit · {completed}/{lessons.length} leçons validées
+              </p>
+              {nextLesson && (
+                <Btn full icon="play" onClick={() => onOpenLesson(course.id, nextLesson.id)}>
+                  {completed > 0 ? 'Continuer le cours' : 'Commencer la première leçon'}
+                </Btn>
+              )}
+            </div>
           )}
         </Card>
 
@@ -257,20 +281,23 @@ export function CoursesScreen({
           <EmptyState
             icon="book"
             title="Contenu en préparation"
-            text="Ce cours fait partie du catalogue de démonstration : ses leçons n'ont pas encore été rédigées dans l'app Android."
+            text="Ce cours fait partie du catalogue de démonstration : ses leçons n'ont pas encore été rédigées."
           />
         ) : (
           <div className="lessons">
             {lessons.map((l) => {
               const done = state.completedLessons.includes(l.id)
               return (
-                <button key={l.id} type="button" className="lesson-row" onClick={() => openLesson(l)}>
+                <button key={l.id} type="button" className="lesson-row" onClick={() => onOpenLesson(course.id, l.id)}>
                   <span className={`lesson-index ${done ? 'done' : ''}`}>
                     {done ? <Icon name="check" size={15} /> : l.orderIndex}
                   </span>
                   <span className="lesson-row-body">
                     <strong>{l.title}</strong>
-                    <small>{l.durationMinutes} min · quiz (+50 XP)</small>
+                    <small>
+                      {l.durationMinutes} min · quiz (+50 XP)
+                      {state.notes[l.id] ? ' · note' : ''}
+                    </small>
                   </span>
                   <Icon name="next" size={16} />
                 </button>
@@ -287,7 +314,9 @@ export function CoursesScreen({
     <div className="screen">
       <header className="screen-head">
         <h1>Cours &amp; domaines</h1>
-        <p>{seed.courses.length} cours · {seed.domains.length} domaines · contenu bilingue</p>
+        <p>
+          {seed.courses.length} cours · {seed.domains.length} domaines · {seed.lessons.length} leçons
+        </p>
       </header>
 
       <div className="input-wrap search">
@@ -312,25 +341,44 @@ export function CoursesScreen({
         ))}
       </div>
 
+      {state.favorites.courses.length > 0 && !search && !domain && (
+        <Card className="fav-strip">
+          <span className="eyebrow"><Icon name="star" size={12} /> Favoris</span>
+          <div className="chip-row">
+            {state.favorites.courses.map((id) => {
+              const c = courseById(id)
+              if (!c) return null
+              return (
+                <Chip key={id} label={c.title} onClick={() => onOpenCourse(id)} />
+              )
+            })}
+          </div>
+        </Card>
+      )}
+
       <div className="stack">
         {courses.map((c) => {
           const d = domainById(c.domainId)
           const progress = state.progress[c.id] ?? 0
           const lessons = lessonsFor(c.id).length
+          const doneLessons = lessonsFor(c.id).filter((l) => state.completedLessons.includes(l.id)).length
           return (
             <Card
               key={c.id}
               className="course-card"
-              onClick={() => setCourse(c)}
+              onClick={() => onOpenCourse(c.id)}
               style={{ borderLeftColor: d.color }}
             >
               <div className="course-card-body">
-                <span className="eyebrow" style={{ color: d.color }}>{d.label}</span>
+                <div className="course-card-top">
+                  <span className="eyebrow" style={{ color: d.color }}>{d.label}</span>
+                  {state.favorites.courses.includes(c.id) && <Icon name="star" size={14} filled />}
+                </div>
                 <h3>{c.title}</h3>
                 <p>{c.instructorName} · {c.durationHours} h · {c.level}</p>
                 <div className="course-card-meta">
                   <span><Icon name="star" size={13} filled /> {c.rating.toFixed(1)}</span>
-                  <span><Icon name="book" size={13} /> {lessons} leçon{lessons > 1 ? 's' : ''}</span>
+                  <span><Icon name="book" size={13} /> {doneLessons}/{lessons} leçons</span>
                   {state.enrolled.includes(c.id) && (
                     <span className="enrolled-tag"><Icon name="check" size={12} /> inscrit</span>
                   )}

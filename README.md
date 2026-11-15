@@ -12,11 +12,12 @@ badges et attestations, emplois et incubateur de projets, communautés par domai
 | Domaine | Détail |
 |---|---|
 | 14 domaines | Anglais, développement, data/IA, cybersécurité, IA, design, maths, physique, lecture, ingénierie, robotique, entrepreneuriat, langues locales, soft skills |
-| Cours & leçons | 14 cours de démonstration, leçons avec contenu et quiz (+50 XP par bonne réponse) |
+| Cours & leçons | 14 cours, **25 leçons** avec contenu et quiz (+50 XP par bonne réponse, +25 % de progression) |
 | Révision | Flashcards SM-2 (facteur de facilité, intervalles, répétitions) + mode éclair 30 s |
 | Certifications | 5 paliers de badges (Bronze → Diamant) selon XP, cours validés et niveau d'anglais, attestations payantes en FCFA |
 | Réseau | Offres d'emploi et candidatures, kanban de projets incubés, salons communautaires par domaine |
 | Expérience | Thème clair/sombre, profil éditable, session live FATA, fonctionnement hors-ligne |
+| Progression | Série de jours, objectif quotidien, précision aux quiz, carte de chaleur d'activité, plan du jour |
 
 ## Aperçu web
 
@@ -28,9 +29,15 @@ SDK Android, dépôts Maven inaccessibles et wrapper Gradle non versionné. Un a
 cd web
 npm install
 npm run dev      # http://localhost:5173
+npm test         # 23 tests unitaires (SM-2, séries, badges, routage, recherche)
+npm run build    # build de production + service worker hors-ligne
 ```
 
 **Compte de démonstration :** `ismaila@africaskills.org` / `Africa2026`
+
+L'aperçu a été poussé au-delà du simple rendu : routage par URL (`#/cours/:id/:leçon`), palette de
+commande `Ctrl+K`, notes de leçon persistées, révision SM-2 avec deep links, recherche insensible aux
+accents, export/import JSON de la progression, impression d'attestation A4 et PWA hors-ligne.
 
 Les données proviennent du code Kotlin (`web/src/data/seed.json`, généré par
 `tools/extract_seed.py`). Paiements, attestations et session live y sont **simulés**, comme dans

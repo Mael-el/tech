@@ -12,3 +12,12 @@ createRoot(root).render(
     <App />
   </AppProvider>,
 )
+
+// Hors-ligne : le service worker n'est enregistré qu'en production.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      /* l'aperçu reste fonctionnel sans cache hors-ligne */
+    })
+  })
+}

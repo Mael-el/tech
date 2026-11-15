@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, type IconName } from './components/Icon'
-import { Avatar, Sheet, Toasts, scrollContentTop } from './components/ui'
+import { Avatar, Sheet, Toasts } from './components/ui'
+import { CommandPalette } from './components/CommandPalette'
 import { useApp } from './store'
+import { useRoute, type Tab } from './lib/router'
 import { LoginScreen } from './screens/Login'
 import { DashboardScreen } from './screens/Dashboard'
 import { CoursesScreen } from './screens/Courses'
@@ -10,14 +12,12 @@ import { CertificatesScreen } from './screens/Certificates'
 import { NetworkScreen } from './screens/Network'
 import { ProfileScreen } from './screens/Profile'
 
-type Tab = 'home' | 'courses' | 'cards' | 'badges' | 'network'
-
-const TABS: { id: Tab; label: string; icon: IconName }[] = [
-  { id: 'home', label: 'Accueil', icon: 'home' },
-  { id: 'courses', label: 'Cours', icon: 'book' },
-  { id: 'cards', label: 'Révision', icon: 'cards' },
-  { id: 'badges', label: 'Certifs', icon: 'award' },
-  { id: 'network', label: 'Réseau', icon: 'globe' },
+const TABS: { id: Tab; label: string; icon: IconName; path: string }[] = [
+  { id: 'home', label: 'Accueil', icon: 'home', path: '#/' },
+  { id: 'courses', label: 'Cours', icon: 'book', path: '#/cours' },
+  { id: 'cards', label: 'Révision', icon: 'cards', path: '#/revision' },
+  { id: 'badges', label: 'Certifs', icon: 'award', path: '#/certifications' },
+  { id: 'network', label: 'Réseau', icon: 'globe', path: '#/reseau' },
 ]
 
 /* --------------------------- Session live --------------------------- */
@@ -108,68 +108,88 @@ function LiveSheet({
   )
 }
 
+function OfflineBanner() {
+  const [offline, setOffline] = useState(!navigator.onLine)
+  useEffect(() => {
+    const goOnline = () => setOffline(false)
+    const goOffline = () => setOffline(true)
+    window.addEventListener('online', goOnline)
+    window.addEventListener('offline', goOffline)
+    return () => {
+      window.removeEventListener('online', goOnline)
+      window.removeEventListener('offline', goOffline)
+    }
+  }, [])
+  if (!offline) return null
+  return (
+    <div className="offline-banner" role="status">
+      <Icon name="shield" size={14} /> Hors-ligne · progression enregistrée localement
+    </div>
+  )
+}
+
 /* ------------------------------- App -------------------------------- */
 
 export default function App() {
   const { state, dispatch } = useApp()
-  const [tab, setTab] = useState<Tab>('home')
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [immersive, setImmersive] = useState(false)
-  const [courseToOpen, setCourseToOpen] = useState<string | null>(null)
+  const [route, navigate] = useRoute()
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const [live, setLive] = useState<{ title: string; instructor: string } | null>(null)
+  const contentRef = useRef<HTMLElement | null>(null)
 
   const account = state.account
-  const contentRef = useRef<HTMLElement | null>(null)
+  const immersive = route.tab === 'courses' && Boolean(route.lessonId)
 
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 })
-  }, [tab, profileOpen])
+  }, [route])
 
-  const openCourse = (id: string) => {
-    setCourseToOpen(id)
-    setProfileOpen(false)
-    setTab('courses')
-  }
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const content = useMemo(() => {
     if (!account) return null
-    if (profileOpen) return <ProfileScreen onBack={() => setProfileOpen(false)} />
-    switch (tab) {
+    switch (route.tab) {
       case 'home':
-        return (
-          <DashboardScreen
-            onNavigate={(next) => setTab(next)}
-            onOpenCourse={openCourse}
-            onOpenLive={() =>
-              setLive({ title: 'Architecture Logicielle & Offline-First', instructor: 'Amina Diallo' })
-            }
-          />
-        )
+        return <DashboardScreen onNavigate={navigate} onOpenLive={() => setLive({ title: 'Architecture Logicielle & Offline-First', instructor: 'Amina Diallo' })} />
       case 'courses':
         return (
           <CoursesScreen
-            openCourseId={courseToOpen}
-            onCourseConsumed={() => setCourseToOpen(null)}
-            onImmersive={setImmersive}
+            courseId={route.courseId ?? null}
+            lessonId={route.lessonId ?? null}
+            onOpenCourse={(id) => navigate(`#/cours/${id}`)}
+            onOpenLesson={(courseId, lessonId) => navigate(`#/cours/${courseId}/${lessonId}`)}
+            onBack={() => navigate('#/cours')}
             onOpenLive={(title, instructor) => setLive({ title, instructor })}
           />
         )
       case 'cards':
-        return <FlashcardsScreen />
+        return <FlashcardsScreen focusCardId={route.cardId ?? null} />
       case 'badges':
         return <CertificatesScreen />
       case 'network':
         return <NetworkScreen />
+      case 'profile':
+        return <ProfileScreen onBack={() => navigate('#/')} onNavigate={navigate} />
       default:
         return null
     }
-  }, [account, profileOpen, tab, courseToOpen])
+  }, [account, route, navigate])
 
   if (!account) {
     return (
       <div className="stage">
         <div className="device">
           <div className="viewport">
+            <OfflineBanner />
             <LoginScreen />
             <div id="sheet-root" className="sheet-root" />
             <Toasts bottom={18} />
@@ -182,13 +202,16 @@ export default function App() {
     )
   }
 
+  const showChrome = !immersive && route.tab !== 'profile'
+
   return (
     <div className="stage">
       <div className="device">
         <div className="viewport">
-          {!immersive && !profileOpen && (
+          <OfflineBanner />
+          {showChrome && (
             <header className="topbar">
-              <button type="button" className="brand" onClick={() => setTab('home')}>
+              <button type="button" className="brand" onClick={() => navigate('#/')}>
                 <img src="/img/logo-192.jpg" alt="" />
                 <span>
                   <strong>AfricaSkills</strong>
@@ -196,19 +219,24 @@ export default function App() {
                 </span>
               </button>
               <div className="topbar-actions">
-                <span className="streak-chip" title="Série d'apprentissage">
-                  <Icon name="flame" size={15} filled /> {state.streak}
-                </span>
+                <button
+                  type="button"
+                  className="icon-btn search-btn"
+                  aria-label="Rechercher (Ctrl K)"
+                  onClick={() => setPaletteOpen(true)}
+                >
+                  <Icon name="search" size={18} />
+                </button>
                 <button
                   type="button"
                   className="icon-btn"
                   aria-label="Changer de thème"
                   onClick={() => dispatch({ type: 'THEME', theme: state.theme === 'light' ? 'dark' : 'light' })}
                 >
-                  <Icon name={state.theme === 'light' ? 'moon' : 'sun'} size={19} />
+                  <Icon name={state.theme === 'light' ? 'moon' : 'sun'} size={18} />
                 </button>
-                <button type="button" className="avatar-btn" onClick={() => setProfileOpen(true)} aria-label="Mon profil">
-                  <Avatar name={account.name} size={36} />
+                <button type="button" className="avatar-btn" onClick={() => navigate('#/profil')} aria-label="Mon profil">
+                  <Avatar name={account.name} size={34} />
                 </button>
               </div>
             </header>
@@ -216,24 +244,23 @@ export default function App() {
 
           <main ref={contentRef} className={`content ${immersive ? 'immersive' : ''}`}>{content}</main>
 
-          {!immersive && !profileOpen && (
+          {showChrome && (
             <nav className="bottomnav" aria-label="Navigation principale">
-              {TABS.map((t) => (
+              {TABS.map((tab) => (
                 <button
-                  key={t.id}
+                  key={tab.id}
                   type="button"
-                  className={tab === t.id ? 'active' : ''}
-                  onClick={() => {
-                    setTab(t.id)
-                    setCourseToOpen(null)
-                  }}
+                  className={route.tab === tab.id ? 'active' : ''}
+                  onClick={() => navigate(tab.path)}
                 >
-                  <Icon name={t.icon} size={21} filled={tab === t.id} />
-                  <span>{t.label}</span>
+                  <Icon name={tab.icon} size={21} filled={route.tab === tab.id} />
+                  <span>{tab.label}</span>
                 </button>
               ))}
             </nav>
           )}
+
+          <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={navigate} />
 
           <div id="sheet-root" className="sheet-root" />
           <LiveSheet

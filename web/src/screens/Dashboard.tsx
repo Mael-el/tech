@@ -2,47 +2,102 @@ import React from 'react'
 import { Icon } from '../components/Icon'
 import { Card, Progress, SectionTitle, Stat } from '../components/ui'
 import {
-  courseById,
   coursesCompleted,
   currentTier,
   domainById,
+  lessonsFor,
   nextTier,
   seed,
+  streakOf,
+  todayXp,
   useApp,
 } from '../store'
+import { activityWindow, accuracy } from '../lib/progress'
+import { isDue } from '../lib/sm2'
+
+function GoalRing({ value, goal }: { value: number; goal: number }) {
+  const radius = 27
+  const circumference = 2 * Math.PI * radius
+  const ratio = Math.max(0, Math.min(1, value / goal))
+  return (
+    <span className="goal-ring">
+      <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+        <circle cx="32" cy="32" r={radius} className="goal-track" />
+        <circle
+          cx="32"
+          cy="32"
+          r={radius}
+          className="goal-value"
+          strokeDasharray={`${circumference * ratio} ${circumference}`}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="goal-text">
+        <strong>{Math.min(value, goal)}</strong>
+        <small>/ {goal} XP</small>
+      </span>
+    </span>
+  )
+}
 
 export function DashboardScreen({
   onNavigate,
-  onOpenCourse,
   onOpenLive,
 }: {
-  onNavigate: (tab: 'courses' | 'cards' | 'badges' | 'network') => void
-  onOpenCourse: (id: string) => void
+  onNavigate: (path: string) => void
   onOpenLive: () => void
 }) {
-  const { state, notify } = useApp()
+  const { state } = useApp()
   const account = state.account
   if (!account) return null
 
   const tier = currentTier(state)
   const upcoming = nextTier(state)
   const done = coursesCompleted(state)
-  const progressToNext = upcoming
-    ? Math.min(100, Math.round((state.points / upcoming.minPoints) * 100))
-    : 100
+  const progressToNext = upcoming ? Math.min(100, Math.round((state.points / upcoming.minPoints) * 100)) : 100
+  const streak = streakOf(state)
+  const today = todayXp(state)
 
   const enrolled = seed.courses
     .filter((c) => state.enrolled.includes(c.id) && (state.progress[c.id] ?? 0) < 100)
     .sort((a, b) => (state.progress[b.id] ?? 0) - (state.progress[a.id] ?? 0))
   const resume = enrolled[0]
+  const nextLesson = resume ? lessonsFor(resume.id).find((l) => !state.completedLessons.includes(l.id)) : undefined
 
-  const dueCards = seed.flashcards.filter((c) => {
-    const card = state.cards[c.id]
-    return !card || card.next <= Date.now()
-  }).length
+  const cards = [...seed.flashcards, ...state.customCards]
+  const dueCards = cards.filter((c) => isDue(state.cards[c.id]))
 
   const jobs = seed.jobs.filter((j) => !state.appliedJobs.includes(j.id)).slice(0, 2)
   const unlocked = seed.badges.filter((b) => state.badges[b.id])
+  const week = activityWindow(state.activity, 7)
+  const weekMax = Math.max(...week.map((d) => d.xp), 1)
+
+  const plan = [
+    {
+      id: 'cards',
+      title: dueCards.length ? `Réviser ${dueCards.length} carte${dueCards.length > 1 ? 's' : ''}` : 'Révision à jour',
+      hint: 'Répétition espacée SM-2',
+      done: dueCards.length === 0,
+      path: '#/revision',
+      icon: 'cards' as const,
+    },
+    {
+      id: 'lesson',
+      title: nextLesson ? 'Terminer la leçon suivante' : 'Cours en cours terminés',
+      hint: nextLesson ? nextLesson.title : resume ? resume.title : 'Inscrivez-vous à un cours',
+      done: !nextLesson,
+      path: nextLesson && resume ? `#/cours/${resume.id}/${nextLesson.id}` : '#/cours',
+      icon: 'play' as const,
+    },
+    {
+      id: 'goal',
+      title: today >= state.dailyGoal ? 'Objectif quotidien atteint' : `Encore ${state.dailyGoal - today} XP aujourd'hui`,
+      hint: `Objectif : ${state.dailyGoal} XP par jour`,
+      done: today >= state.dailyGoal,
+      path: '#/revision',
+      icon: 'target' as const,
+    },
+  ]
 
   const firstName = account.name.split(' ')[0]
 
@@ -57,7 +112,7 @@ export function DashboardScreen({
           </div>
           <span className="streak" title="Série d'apprentissage">
             <Icon name="flame" size={16} filled />
-            {state.streak}
+            {streak}
           </span>
         </div>
 
@@ -88,19 +143,49 @@ export function DashboardScreen({
         )}
       </section>
 
+      <Card className="goal-card">
+        <GoalRing value={today} goal={state.dailyGoal} />
+        <div className="goal-body">
+          <span className="eyebrow">Objectif du jour</span>
+          <h3>{today >= state.dailyGoal ? 'Objectif atteint, bravo !' : 'Garde le rythme'}</h3>
+          <div className="week-bars" aria-hidden="true">
+            {week.map((day) => (
+              <span key={day.key} className="week-bar" title={`${day.xp} XP`}>
+                <i style={{ height: `${Math.max(6, (day.xp / weekMax) * 100)}%` }} />
+                <small>{day.label}</small>
+              </span>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <SectionTitle title="Plan du jour" action="Révision" onAction={() => onNavigate('#/revision')} />
+      <div className="plan">
+        {plan.map((item) => (
+          <button key={item.id} type="button" className={`plan-row ${item.done ? 'done' : ''}`} onClick={() => onNavigate(item.path)}>
+            <span className="plan-icon"><Icon name={item.done ? 'check' : item.icon} size={16} /></span>
+            <span className="plan-text">
+              <strong>{item.title}</strong>
+              <small>{item.hint}</small>
+            </span>
+            {!item.done && <Icon name="next" size={15} />}
+          </button>
+        ))}
+      </div>
+
       <div className="stats-grid">
-        <Stat icon="sparkles" value={state.points.toLocaleString('fr-FR')} label="points XP" tone="#C2410C" />
-        <Stat icon="flame" value={`${state.streak} j`} label="série" tone="#EA580C" />
-        <Stat icon="book" value={`${done}`} label="cours" tone="#1D4ED8" />
+        <Stat icon="sparkles" value={state.points.toLocaleString('fr-FR')} label="points" tone="#C2410C" />
+        <Stat icon="flame" value={`${streak} j`} label="série" tone="#EA580C" />
+        <Stat icon="target" value={`${accuracy(state.quiz)} %`} label="précision" tone="#059669" />
         <Stat icon="award" value={`${unlocked.length}/5`} label="badges" tone="#7C3AED" />
       </div>
 
       {resume && (
         <>
-          <SectionTitle title="Reprendre" action="Mes cours" onAction={() => onNavigate('courses')} />
+          <SectionTitle title="Reprendre" action="Mes cours" onAction={() => onNavigate('#/cours')} />
           <Card
             className="resume"
-            onClick={() => onOpenCourse(resume.id)}
+            onClick={() => onNavigate(`#/cours/${resume.id}`)}
             style={{ borderLeftColor: domainById(resume.domainId).color }}
           >
             <div className="resume-body">
@@ -131,20 +216,7 @@ export function DashboardScreen({
         <span className="live-join">Rejoindre</span>
       </Card>
 
-      <SectionTitle title="Révision du jour" action="Ouvrir" onAction={() => onNavigate('cards')} />
-      <Card className="due-card" onClick={() => onNavigate('cards')}>
-        <span className="due-ring">
-          <strong>{dueCards}</strong>
-          <small>cartes</small>
-        </span>
-        <div>
-          <h3>{dueCards > 0 ? 'Cartes à réviser aujourd’hui' : 'Tout est à jour'}</h3>
-          <p>Répétition espacée SM-2 · {seed.flashcards.length} cartes dans votre paquet.</p>
-        </div>
-        <Icon name="next" size={18} />
-      </Card>
-
-      <SectionTitle title="Explorer les domaines" action="Tout voir" onAction={() => onNavigate('courses')} />
+      <SectionTitle title="Explorer les domaines" action="Tout voir" onAction={() => onNavigate('#/cours')} />
       <div className="domain-scroll">
         {seed.domains.map((d) => (
           <button
@@ -152,7 +224,7 @@ export function DashboardScreen({
             type="button"
             className="domain-tile"
             style={{ borderColor: `${d.color}55` }}
-            onClick={() => onNavigate('courses')}
+            onClick={() => onNavigate('#/cours')}
           >
             <span className="domain-dot" style={{ background: d.color }} />
             <strong>{d.label}</strong>
@@ -161,10 +233,10 @@ export function DashboardScreen({
         ))}
       </div>
 
-      <SectionTitle title="Opportunités" action="Réseau" onAction={() => onNavigate('network')} />
+      <SectionTitle title="Opportunités" action="Réseau" onAction={() => onNavigate('#/reseau')} />
       <div className="stack">
         {jobs.map((job) => (
-          <Card key={job.id} className="job-mini" onClick={() => onNavigate('network')}>
+          <Card key={job.id} className="job-mini" onClick={() => onNavigate('#/reseau')}>
             <div className="job-logo" style={{ background: `${domainById(job.domainId).color}1a`, color: domainById(job.domainId).color }}>
               <Icon name="briefcase" size={18} />
             </div>
@@ -178,7 +250,7 @@ export function DashboardScreen({
         ))}
       </div>
 
-      <SectionTitle title="Vos badges" action="Certificats" onAction={() => onNavigate('badges')} />
+      <SectionTitle title="Vos badges" action="Certificats" onAction={() => onNavigate('#/certifications')} />
       <Card className="badges-strip">
         {seed.badges.map((b) => {
           const isUnlocked = Boolean(state.badges[b.id])
@@ -194,15 +266,9 @@ export function DashboardScreen({
         })}
       </Card>
 
-      <button
-        type="button"
-        className="refresh-demo"
-        onClick={() => {
-          notify('Progression de démonstration conservée dans ce navigateur.')
-        }}
-      >
-        <Icon name="shield" size={14} /> Données de démonstration · stockage local
-      </button>
+      <p className="refresh-demo">
+        <Icon name="shield" size={14} /> Données de démonstration · stockage local (Ctrl K pour rechercher)
+      </p>
     </div>
   )
 }

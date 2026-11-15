@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Icon } from '../components/Icon'
 import { Btn, Card, Progress, Sheet } from '../components/ui'
 import {
@@ -10,7 +11,23 @@ import {
   unlockedTiers,
   useApp,
 } from '../store'
+import { dayForPoints } from '../lib/progress'
+import { formatDateFR } from '../lib/format'
 import type { Attestation } from '../types'
+
+/**
+ * Les dates de déblocage du seed Kotlin sont codées en dur. On les recalcule ici
+ * à partir de l'activité réelle : jour où le cumul d'XP franchit le seuil du palier.
+ */
+function badgeDate(
+  badge: { pointsRequired: number },
+  stored: string | null,
+  activity: Record<string, number>,
+): string {
+  const key = dayForPoints(activity, badge.pointsRequired)
+  if (key) return formatDateFR(new Date(`${key}T12:00:00`))
+  return stored ?? '—'
+}
 
 const PROVIDERS = [
   { id: 'MTN Mobile Money', hint: '*880# · Bénin, Côte d’Ivoire, Ghana' },
@@ -102,7 +119,11 @@ export function CertificatesScreen() {
               <div>
                 <strong>{t.label}</strong>
                 <small>{t.minPoints.toLocaleString('fr-FR')} XP · {t.minCourses} cours · {t.requiredEnglish}</small>
-                {unlocked && state.badges[badge.id] && <small className="unlock-date">Débloqué le {state.badges[badge.id]}</small>}
+                {unlocked && (
+                  <small className="unlock-date">
+                    Débloqué le {badgeDate(badge, state.badges[badge.id], state.activity)}
+                  </small>
+                )}
               </div>
               {unlocked ? (
                 <span className="check-dot"><Icon name="check" size={14} /></span>
@@ -209,6 +230,45 @@ export function CertificatesScreen() {
         )}
       </Sheet>
 
+      {viewing &&
+        createPortal(
+          <div className="print-cert">
+            <div className="print-cert-inner">
+              <div className="print-cert-head">
+                <img src="/img/logo.jpg" alt="" />
+                <div>
+                  <strong>AFRICASKILLS</strong>
+                  <span>Plateforme panafricaine de compétences</span>
+                </div>
+              </div>
+              <span className="print-cert-kicker">Attestation professionnelle</span>
+              <h1>{viewing.title}</h1>
+              <p className="print-cert-said">Décernée à</p>
+              <h2>{state.account?.name ?? viewing.recipientName}</h2>
+              <p className="print-cert-desc">
+                Pour la validation des compétences du parcours <strong>{viewing.domainName}</strong>, niveau{' '}
+                {viewing.tier}. Ce document atteste de la réussite des évaluations du programme AfricaSkills.
+              </p>
+              <div className="print-cert-signs">
+                <div>
+                  <span>{viewing.expertSigner}</span>
+                  <small>{viewing.expertRole}</small>
+                </div>
+                <div>
+                  <span>Direction pédagogique</span>
+                  <small>AfricaSkills · Cotonou, Bénin</small>
+                </div>
+              </div>
+              <div className="print-cert-meta">
+                <span>N° {viewing.certificateNumber}</span>
+                <span>Délivrée le {paidInfo(viewing)?.date ?? viewing.issueDate}</span>
+              </div>
+              <p className="print-cert-url">Vérification : {viewing.verificationUrl}</p>
+            </div>
+          </div>,
+          document.body,
+        )}
+
       <Sheet open={Boolean(viewing)} onClose={() => setViewing(null)} title="Attestation officielle" wide>
         {viewing && (
           <div className="certificate">
@@ -234,6 +294,21 @@ export function CertificatesScreen() {
               <a className="cert-url" href={viewing.verificationUrl} target="_blank" rel="noreferrer">
                 {viewing.verificationUrl}
               </a>
+            </div>
+            <div className="cert-actions">
+              <Btn variant="soft" icon="download" onClick={() => window.print()}>
+                Imprimer / exporter en PDF
+              </Btn>
+              <button
+                type="button"
+                className="link"
+                onClick={() => {
+                  navigator.clipboard?.writeText(`${window.location.origin}/#/certifications`)
+                  notify("Lien de vérification copié (démo).")
+                }}
+              >
+                Copier le lien
+              </button>
             </div>
             <p className="disclaimer">
               <Icon name="shield" size={14} />

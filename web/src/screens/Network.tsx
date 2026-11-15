@@ -115,7 +115,11 @@ export function NetworkScreen() {
       )}
 
       {tab === 'projects' && (
-        <div className="kanban">
+        <>
+          <p className="scroll-hint">
+            <Icon name="next" size={13} /> Glissez horizontalement pour changer d'étape
+          </p>
+          <div className="kanban">
           {STATUSES.map((status) => {
             const items = seed.projects.filter((p) => (state.projectStatus[p.id] ?? p.status) === status.id)
             return (
@@ -149,7 +153,8 @@ export function NetworkScreen() {
               </section>
             )
           })}
-        </div>
+          </div>
+        </>
       )}
 
       {tab === 'community' && (

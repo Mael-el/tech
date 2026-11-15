@@ -1,42 +1,59 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
-import { Btn, Card, Chip, EmptyState } from '../components/ui'
-import { domainById, seed, useApp } from '../store'
+import { Btn, Card, Chip, EmptyState, Sheet } from '../components/ui'
+import { allCards, domainById, seed, useApp } from '../store'
+import { isDue, QUALITY_LABELS } from '../lib/sm2'
+import type { Flashcard } from '../types'
 
-const QUALITY: { value: number; label: string; tone: string }[] = [
-  { value: 0, label: 'À revoir', tone: '#DC2626' },
-  { value: 2, label: 'Difficile', tone: '#D97706' },
-  { value: 4, label: 'Bien', tone: '#0284C7' },
-  { value: 5, label: 'Facile', tone: '#059669' },
-]
-
-export function FlashcardsScreen() {
+export function FlashcardsScreen({ focusCardId }: { focusCardId: string | null }) {
   const { state, dispatch, notify } = useApp()
   const [filter, setFilter] = useState<string | null>(null)
+  const [dueOnly, setDueOnly] = useState(false)
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [showHint, setShowHint] = useState(false)
-
   const [speed, setSpeed] = useState(false)
   const [seconds, setSeconds] = useState(30)
   const [score, setScore] = useState(0)
+  const [adding, setAdding] = useState(false)
   const timer = useRef<number | null>(null)
+  const appliedFocus = useRef<string | null>(null)
 
+  const cards = allCards(state)
   const deck = useMemo(
-    () => seed.flashcards.filter((c) => !filter || c.domainId === filter),
-    [filter],
+    () =>
+      cards.filter(
+        (c) =>
+          (!filter || c.domainId === filter) &&
+          (!dueOnly || isDue(state.cards[c.id])),
+      ),
+    // state.cards évolue à chaque révision pour refléter les échéances
+    [cards, filter, dueOnly, state.cards],
   )
-  const card = deck[index % Math.max(1, deck.length)]
-  const cardState = card ? state.cards[card.id] : null
-  const due = deck.filter((c) => {
-    const s = state.cards[c.id]
-    return !s || s.next <= Date.now()
-  }).length
+
+  const card: Flashcard | undefined = deck[Math.min(index, Math.max(0, deck.length - 1))]
+  const cardState = card ? state.cards[card.id] : undefined
+  const due = cards.filter((c) => isDue(state.cards[c.id])).length
 
   const domains = useMemo(
-    () => seed.domains.filter((d) => seed.flashcards.some((c) => c.domainId === d.id)),
-    [],
+    () => seed.domains.filter((d) => cards.some((c) => c.domainId === d.id)),
+    [cards],
   )
+
+  useEffect(() => {
+    if (!focusCardId || appliedFocus.current === focusCardId) return
+    const position = deck.findIndex((c) => c.id === focusCardId)
+    if (position >= 0) {
+      setIndex(position)
+      setFlipped(false)
+      appliedFocus.current = focusCardId
+    }
+  }, [focusCardId, deck])
+
+  useEffect(() => {
+    if (!deck.length) setIndex(0)
+    else if (index >= deck.length) setIndex(0)
+  }, [deck.length, index])
 
   useEffect(() => {
     if (!speed) {
@@ -67,21 +84,27 @@ export function FlashcardsScreen() {
     }
   }, [speed, seconds, score, notify])
 
-  const move = (dir: 1 | -1) => {
+  const move = (direction: 1 | -1) => {
     setFlipped(false)
     setShowHint(false)
-    setIndex((i) => {
+    setIndex((current) => {
       const size = deck.length
       if (!size) return 0
-      return (i + dir + size) % size
+      return (current + direction + size) % size
     })
   }
 
   const review = (quality: number) => {
     if (!card) return
     dispatch({ type: 'REVIEW_CARD', cardId: card.id, quality })
-    notify(`Révision enregistrée (+15 XP) · ${QUALITY.find((q) => q.value === quality)?.label}`)
-    move(1)
+    notify(`Révision enregistrée (+15 XP) · ${QUALITY_LABELS.find((q) => q.value === quality)?.label}`)
+    if (dueOnly) {
+      // La carte quitte le paquet « à réviser » : l'index courant pointe déjà sur la suivante.
+      setFlipped(false)
+      setShowHint(false)
+    } else {
+      move(1)
+    }
   }
 
   const startSpeed = () => {
@@ -99,6 +122,28 @@ export function FlashcardsScreen() {
     move(1)
   }
 
+  /* Raccourcis clavier : espace = retourner, flèches = naviguer, 1-4 = noter. */
+  useEffect(() => {
+    if (speed || adding) return
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+      if (event.key === ' ') {
+        event.preventDefault()
+        setFlipped((v) => !v)
+      } else if (event.key === 'ArrowRight') {
+        move(1)
+      } else if (event.key === 'ArrowLeft') {
+        move(-1)
+      } else if (['1', '2', '3', '4'].includes(event.key) && flipped) {
+        const quality = QUALITY_LABELS[Number(event.key) - 1]
+        if (quality) review(quality.value)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [speed, adding, flipped, deck.length, card?.id])
+
   const resetFilter = (value: string | null) => {
     setFilter(value)
     setIndex(0)
@@ -106,25 +151,16 @@ export function FlashcardsScreen() {
     setShowHint(false)
   }
 
-  if (!card) {
-    return (
-      <div className="screen">
-        <header className="screen-head">
-          <h1>Révision</h1>
-          <p>Répétition espacée SM-2</p>
-        </header>
-        <EmptyState icon="cards" title="Aucune carte" text="Ce domaine ne contient pas encore de flashcards." />
-      </div>
-    )
-  }
-
-  const domain = domainById(card.domainId)
-
   return (
     <div className="screen">
       <header className="screen-head">
-        <h1>Révision</h1>
-        <p>{due} carte{due > 1 ? 's' : ''} à réviser aujourd’hui · algorithme SM-2</p>
+        <div className="row-between">
+          <h1>Révision</h1>
+          <Btn variant="ghost" icon="sparkles" onClick={() => setAdding(true)}>
+            Nouvelle carte
+          </Btn>
+        </div>
+        <p>{due} carte{due > 1 ? 's' : ''} à réviser · {cards.length} au total · SM-2</p>
       </header>
 
       <div className="chip-row">
@@ -138,25 +174,28 @@ export function FlashcardsScreen() {
             onClick={() => resetFilter(filter === d.id ? null : d.id)}
           />
         ))}
+        <Chip label={`À réviser (${due})`} active={dueOnly} icon="target" onClick={() => { setDueOnly((v) => !v); setIndex(0); setFlipped(false) }} />
       </div>
 
-      {speed ? (
+      {!card ? (
+        <EmptyState
+          icon="check"
+          title={dueOnly ? 'Tout est révisé' : 'Aucune carte'}
+          text={dueOnly ? 'Revenez demain : les intervalles SM-2 planifient vos prochaines révisions.' : 'Ajoutez une carte ou changez de domaine.'}
+        />
+      ) : speed ? (
         <Card className="speed-panel">
           <div className="speed-head">
             <span className="speed-timer"><Icon name="clock" size={16} /> {seconds} s</span>
             <span className="speed-score">Score {score}</span>
           </div>
           <div className="speed-card">
-            <span className="eyebrow" style={{ color: domain.color }}>{domain.label}</span>
+            <span className="eyebrow" style={{ color: domainById(card.domainId).color }}>{domainById(card.domainId).label}</span>
             <h3>{card.front}</h3>
           </div>
           <div className="speed-actions">
-            <Btn variant="soft" full onClick={() => answerSpeed(false)}>
-              Je ne savais pas
-            </Btn>
-            <Btn full onClick={() => answerSpeed(true)}>
-              Je savais
-            </Btn>
+            <Btn variant="soft" full onClick={() => answerSpeed(false)}>Je ne savais pas</Btn>
+            <Btn full onClick={() => answerSpeed(true)}>Je savais</Btn>
           </div>
           <button
             type="button"
@@ -174,17 +213,29 @@ export function FlashcardsScreen() {
         <>
           <div className="deck-meta">
             <span>{index + 1} / {deck.length}</span>
-            <button type="button" className="link" onClick={startSpeed}>
-              <Icon name="live" size={14} /> Mode éclair 30 s
-            </button>
+            <div className="deck-actions">
+              <button
+                type="button"
+                className={`icon-btn small ${state.favorites.cards.includes(card.id) ? 'fav-on' : ''}`}
+                aria-label="Favori"
+                onClick={() => dispatch({ type: 'TOGGLE_FAV_CARD', cardId: card.id })}
+              >
+                <Icon name="star" size={15} filled={state.favorites.cards.includes(card.id)} />
+              </button>
+              <button type="button" className="link" onClick={startSpeed}>
+                <Icon name="live" size={14} /> Mode éclair 30 s
+              </button>
+            </div>
           </div>
 
           <div className="flip" onClick={() => setFlipped((v) => !v)}>
             <div className={`flip-inner ${flipped ? 'flipped' : ''}`}>
               <div className="flip-face flip-front">
-                <span className="eyebrow" style={{ color: domain.color }}>{domain.label}</span>
+                <span className="eyebrow" style={{ color: domainById(card.domainId).color }}>
+                  {domainById(card.domainId).label}
+                </span>
                 <p className="flip-question">{card.front}</p>
-                <span className="flip-hint-label">Appuyez pour retourner la carte</span>
+                <span className="flip-hint-label">Appuyez ou espace pour retourner la carte</span>
                 <button
                   type="button"
                   className="link"
@@ -221,7 +272,7 @@ export function FlashcardsScreen() {
 
           <p className="rate-label">Comment était cette carte ?</p>
           <div className="rate-grid">
-            {QUALITY.map((q) => (
+            {QUALITY_LABELS.map((q) => (
               <button
                 key={q.value}
                 type="button"
@@ -243,8 +294,87 @@ export function FlashcardsScreen() {
               <p>Prochaine révision : {new Date(cardState.next).toLocaleDateString('fr-FR')}</p>
             </Card>
           )}
+
+          {card.id.startsWith('cc_') && (
+            <button
+              type="button"
+              className="link center danger-link"
+              onClick={() => {
+                dispatch({ type: 'DELETE_CARD', cardId: card.id })
+                notify('Carte personnalisée supprimée.')
+              }}
+            >
+              <Icon name="close" size={14} /> Supprimer cette carte personnalisée
+            </button>
+          )}
         </>
       )}
+
+      <NewCardSheet open={adding} onClose={() => setAdding(false)} />
     </div>
+  )
+}
+
+function NewCardSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { dispatch, notify } = useApp()
+  const [front, setFront] = useState('')
+  const [back, setBack] = useState('')
+  const [hint, setHint] = useState('')
+  const [domainId, setDomainId] = useState(seed.domains[0].id)
+
+  const submit = () => {
+    if (front.trim().length < 5 || back.trim().length < 3) {
+      notify('Renseignez une question et une réponse.', true)
+      return
+    }
+    dispatch({
+      type: 'ADD_CARD',
+      card: {
+        id: `cc_${Date.now()}`,
+        domainId,
+        front: front.trim(),
+        back: back.trim(),
+        hint: hint.trim() || 'Carte personnelle',
+        easeFactor: 2.5,
+        intervalDays: 1,
+        repetitions: 0,
+      },
+    })
+    notify('Carte ajoutée au paquet.')
+    setFront('')
+    setBack('')
+    setHint('')
+    onClose()
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Nouvelle flashcard">
+      <div className="form">
+        <label className="field">
+          <span>Question / recto</span>
+          <textarea value={front} onChange={(e) => setFront(e.target.value)} rows={2} placeholder="Ex. Que garantit une clé d'idempotence ?" />
+        </label>
+        <label className="field">
+          <span>Réponse / verso</span>
+          <textarea value={back} onChange={(e) => setBack(e.target.value)} rows={2} placeholder="Réponse courte et précise" />
+        </label>
+        <label className="field">
+          <span>Indice (optionnel)</span>
+          <div className="input-wrap">
+            <Icon name="sparkles" size={16} />
+            <input value={hint} onChange={(e) => setHint(e.target.value)} placeholder="Un mot-clé pour vous aider" />
+          </div>
+        </label>
+        <label className="field">
+          <span>Domaine</span>
+          <select value={domainId} onChange={(e) => setDomainId(e.target.value)} className="select">
+            {seed.domains.map((d) => (
+              <option key={d.id} value={d.id}>{d.label}</option>
+            ))}
+          </select>
+        </label>
+        <Btn full icon="check" onClick={submit}>Ajouter la carte</Btn>
+      </div>
+    </Sheet>
   )
 }
