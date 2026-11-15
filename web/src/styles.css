@@ -92,9 +92,20 @@ button { font-family: inherit; }
   min-height: 0;
   overflow: hidden;
 }
-/* Login occupe l'espace restant et scrolle à l'intérieur — évite la troncature vue en capture */
-.viewport:has(.login) { min-height: 0; overflow: hidden; }
-.viewport:has(.login) .login { flex: 1 1 auto; min-height: 0; scroll-padding-bottom: 16px; scrollbar-gutter: stable; }
+/* Login — laisser le viewport scroller (plus robuste que scroll interne) */
+.viewport:has(.login) {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.viewport:has(.login) .login {
+  flex: none;
+  min-height: auto;
+  height: auto;
+  overflow: visible;
+  scroll-padding-bottom: 24px;
+}
 
 .stage-caption {
   margin: 0;
@@ -457,14 +468,13 @@ p { margin: 0; line-height: 1.5; }
 /* --------------------------------- Login -------------------------------- */
 
 .login {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
   height: auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
   padding: 26px 18px calc(24px + env(safe-area-inset-bottom));
   padding-top: calc(26px + env(safe-area-inset-top));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   justify-content: flex-start;

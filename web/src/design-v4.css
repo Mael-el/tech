@@ -867,10 +867,10 @@ html[data-theme='dark'] .chip-active { color: #04221d !important; }
   gap: 18px;
   padding: 34px 18px calc(24px + env(safe-area-inset-bottom));
   padding-top: calc(34px + env(safe-area-inset-top));
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  flex: none;
+  min-height: auto;
+  height: auto;
+  overflow: visible;
 }
 @media (min-height: 740px) and (min-width: 361px) {
   .login { justify-content: safe center; }
