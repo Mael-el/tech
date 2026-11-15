@@ -10,14 +10,12 @@ export function CoursesScreen({
   onOpenCourse,
   onOpenLesson,
   onBack,
-  onOpenLive,
 }: {
   courseId: string | null
   lessonId: string | null
   onOpenCourse: (id: string) => void
   onOpenLesson: (courseId: string, lessonId: string) => void
   onBack: () => void
-  onOpenLive: (title: string, instructor: string) => void
 }) {
   const { state, dispatch, notify } = useApp()
   const [domain, setDomain] = useState<string | null>(null)
@@ -265,23 +263,12 @@ export function CoursesScreen({
           )}
         </Card>
 
-        {course.nextSessionFata && (
-          <Card className="fata-row" onClick={() => onOpenLive(course.title, course.instructorName)}>
-            <span className="live-icon"><Icon name="live" size={18} /></span>
-            <div>
-              <strong>Classe virtuelle FATA</strong>
-              <p>{course.nextSessionFata} · {course.instructorName}</p>
-            </div>
-            <Icon name="next" size={17} />
-          </Card>
-        )}
-
         <SectionTitle title={`Programme · ${lessons.length} leçon${lessons.length > 1 ? 's' : ''}`} />
         {lessons.length === 0 ? (
           <EmptyState
             icon="book"
             title="Contenu en préparation"
-            text="Ce cours fait partie du catalogue de démonstration : ses leçons n'ont pas encore été rédigées."
+            text="Aucune leçon n'est encore disponible pour ce cours dans la version web. Le catalogue d'origine en compte davantage."
           />
         ) : (
           <div className="lessons">

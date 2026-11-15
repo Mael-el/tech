@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Icon } from '../components/Icon'
 import { Btn, Card } from '../components/ui'
-import { DEMO_EMAIL, DEMO_PASSWORD, useApp } from '../store'
+import { ENGLISH_LEVELS, useApp } from '../store'
 
 export function LoginScreen() {
   const { login, register, notify } = useApp()
@@ -9,6 +9,7 @@ export function LoginScreen() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [city, setCity] = useState('')
+  const [level, setLevel] = useState('A1')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,18 +17,9 @@ export function LoginScreen() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     const message =
-      mode === 'login' ? login(email, password) : register(name, email, password, city)
+      mode === 'login' ? login(email, password) : register(name, email, password, city, level)
     setError(message)
     if (!message) notify(mode === 'login' ? 'Connexion réussie. Bon apprentissage !' : 'Compte créé. Bienvenue !')
-  }
-
-  const enterDemo = () => {
-    setError(null)
-    setEmail(DEMO_EMAIL)
-    setPassword(DEMO_PASSWORD)
-    const message = login(DEMO_EMAIL, DEMO_PASSWORD)
-    setError(message)
-    if (!message) notify('Mode démonstration activé.')
   }
 
   return (
@@ -135,6 +127,22 @@ export function LoginScreen() {
             </div>
           </label>
 
+          {mode === 'signup' && (
+            <label className="field">
+              <span>Niveau d'anglais estimé</span>
+              <div className="select-wrap">
+                <Icon name="globe" size={17} />
+                <select value={level} onChange={(e) => setLevel(e.target.value)}>
+                  {ENGLISH_LEVELS.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </label>
+          )}
+
           {error && (
             <p className="form-error" role="alert">
               <Icon name="close" size={14} />
@@ -147,20 +155,11 @@ export function LoginScreen() {
           </Btn>
         </form>
 
-        <div className="or"><span>ou</span></div>
-
-        <Btn variant="soft" full icon="sparkles" onClick={enterDemo}>
-          Entrer avec le compte de démonstration
-        </Btn>
-
-        <p className="demo-hint">
-          Démo locale : <strong>{DEMO_EMAIL}</strong> · mot de passe <strong>{DEMO_PASSWORD}</strong>
-        </p>
       </Card>
 
       <p className="login-note">
-        Aperçu web du projet Android <em>AfricaSkills</em> (Kotlin + Jetpack Compose). Les données restent dans
-        votre navigateur : paiements, attestations et sessions live sont simulés.
+        Port web du projet Android <em>AfricaSkills</em> (Kotlin + Jetpack Compose). Votre compte, vos cours et vos
+        candidatures sont enregistrés dans ce navigateur, sans serveur : aucun mot de passe ne quitte l'appareil.
       </p>
     </div>
   )

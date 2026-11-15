@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildIndex, normalize, searchEntries } from './search'
-import type { Course, Flashcard, Job, Lesson, Project } from '../types'
+import type { Course, Flashcard, Lesson } from '../types'
 
 const course = (id: string, title: string, description = ''): Course => ({
   id, domainId: 'dev', title, description, instructorName: 'Amina Diallo', level: 'Intermédiaire',
@@ -17,8 +17,8 @@ const index = buildIndex(
   [course('c_dev', 'Architecture Kotlin & Compose'), course('c_math', 'Probabilités, Statistiques & Algèbre')],
   [lesson('l1', 'c_math', '1. Théorème de Bayes', 'précision et prévalence')],
   [{ id: 'fc_1', domainId: 'dev', front: 'Clé d’idempotence', back: 'évite le double débit', hint: '', easeFactor: 2.5, intervalDays: 1, repetitions: 0 }] as Flashcard[],
-  [{ id: 'j1', domainId: 'dev', title: 'Ingénieur Android', companyName: 'Wave', location: 'Dakar', type: 'CDI', badgeRequired: '', salaryRange: '', isApplied: false, description: 'Kotlin', requirements: '' }] as Job[],
-  [{ id: 'p1', domainId: 'dev', title: 'KiliPay', description: 'paiement', status: 'TODO', teamSize: 3, targetKpi: '', mentorName: 'Mentor', repoUrl: '', isStartupIncubated: false }] as Project[],
+  [{ id: 'app_1', role: 'Ingénieur Android', company: 'Wave', status: 'Entretien' }],
+  [{ id: 'proj_1', title: 'KiliPay', note: 'paiement mobile', stage: 'en cours' }],
   (id) => (id === 'c_math' ? 'Probabilités, Statistiques & Algèbre' : 'Architecture Kotlin & Compose'),
   (id) => (id === 'dev' ? 'Développement' : 'Mathématiques'),
 )
@@ -44,6 +44,16 @@ describe('recherche globale', () => {
   it('classe le titre exact avant le contenu', () => {
     const results = searchEntries(index, 'idempotence')
     expect(results[0]?.kind).toBe('carte')
+  })
+
+  it('retrouve une candidature suivie', () => {
+    const results = searchEntries(index, 'wave')
+    expect(results.some((entry) => entry.id === 'app_1' && entry.kind === 'candidature')).toBe(true)
+  })
+
+  it('retrouve un projet personnel par sa note', () => {
+    const results = searchEntries(index, 'paiement mobile')
+    expect(results.some((entry) => entry.id === 'proj_1' && entry.kind === 'projet')).toBe(true)
   })
 
   it('renvoie une liste vide sans requête', () => {

@@ -6,9 +6,11 @@ export type IconName =
   | 'kanban' | 'chat' | 'send' | 'user' | 'logout' | 'lock' | 'mail' | 'phone'
   | 'pin' | 'sparkles' | 'clock' | 'star' | 'shield' | 'download' | 'refresh'
   | 'chevron' | 'menu' | 'target' | 'users' | 'code' | 'live'
-  | 'gamepad' | 'trophy' | 'bulb' | 'bolt' | 'info' | 'external'
+  | 'gamepad' | 'trophy' | 'bulb' | 'bolt' | 'info' | 'external' | 'pause' | 'trash'
 
 const paths: Record<IconName, React.ReactNode> = {
+  pause: <><rect x="8" y="5" width="3.4" height="14" rx="1.2" /><rect x="14" y="5" width="3.4" height="14" rx="1.2" /></>,
+  trash: <><path d="M4 7h16" /><path d="M9.5 7V4.8h5V7" /><path d="M6.5 7l1 13h9l1-13" /></>,
   home: <><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M9.5 21v-6h5v6" /></>,
   book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z" /><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" /></>,
   cards: <><rect x="3" y="6" width="13" height="15" rx="2.5" /><path d="M8 3h8.5A2.5 2.5 0 0 1 19 5.5V17" /><path d="M6.5 12h6" /><path d="M6.5 16h4" /></>,

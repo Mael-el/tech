@@ -28,6 +28,12 @@ describe('routage par hash', () => {
     expect(routePath({ tab: 'facts', factId: 'f_waka' })).toBe('#/infos/f_waka')
   })
 
+  it('ouvre une page de vérification publique', () => {
+    expect(parseHash('#/verifier/abc.123')).toEqual({ tab: 'verify', code: 'abc.123' })
+    expect(parseHash('#/verifier')).toEqual({ tab: 'verify', code: undefined })
+    expect(routePath({ tab: 'verify', code: 'abc.123' })).toBe('#/verifier/abc.123')
+  })
+
   it('accepte les alias et retombe sur l’accueil', () => {
     expect(parseHash('#/profile')).toEqual({ tab: 'profile' })
     expect(parseHash('#/inconnu')).toEqual({ tab: 'home' })

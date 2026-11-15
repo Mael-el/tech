@@ -1,222 +1,304 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useState } from 'react'
 import { Icon } from '../components/Icon'
-import { Btn, Card, Chip, EmptyState } from '../components/ui'
-import { domainById, seed, useApp } from '../store'
+import { Btn, Card, EmptyState } from '../components/ui'
+import type { ApplicationStatus, ProjectStage } from '../store'
+import { useApp } from '../store'
+import {
+  APPLICATION_STATUSES,
+  JOB_BOARDS,
+  PROJECT_STAGES,
+  PROJECT_STAGE_LABELS,
+} from '../lib/user-projects'
 
-const STATUSES = [
-  { id: 'TODO', label: 'À faire' },
-  { id: 'IN_PROGRESS', label: 'En cours' },
-  { id: 'DONE', label: 'Terminé' },
-  { id: 'INCUBATION', label: 'Incubation' },
-]
+type Tab = 'applications' | 'projects' | 'boards'
+
+const STATUS_TONE: Record<ApplicationStatus, string> = {
+  'À postuler': '#B45309',
+  Envoyée: '#0369A1',
+  Entretien: '#7C3AED',
+  Offre: '#047857',
+  Refus: '#B91C1C',
+}
+
+function normalizeUrl(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
 
 export function NetworkScreen() {
   const { state, dispatch, notify } = useApp()
-  const [tab, setTab] = useState<'jobs' | 'projects' | 'community'>('jobs')
-  const [domain, setDomain] = useState(seed.messages[0]?.domainId ?? 'dev')
-  const [draft, setDraft] = useState('')
-  const endRef = useRef<HTMLDivElement | null>(null)
+  const [tab, setTab] = useState<Tab>('applications')
 
-  const messages = useMemo(
-    () => state.messages.filter((m) => m.domainId === domain),
-    [state.messages, domain],
-  )
+  const [company, setCompany] = useState('')
+  const [role, setRole] = useState('')
+  const [url, setUrl] = useState('')
+  const [status, setStatus] = useState<ApplicationStatus>('À postuler')
 
-  useEffect(() => {
-    if (tab === 'community') endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
-  }, [messages.length, tab])
+  const [title, setTitle] = useState('')
+  const [note, setNote] = useState('')
 
-  const send = () => {
-    if (!draft.trim()) return
-    dispatch({
-      type: 'SEND_MESSAGE',
-      domainId: domain,
-      text: draft.trim(),
-      author: state.account?.name ?? 'Apprenant',
-    })
-    setDraft('')
+  const addApplication = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!company.trim() || !role.trim()) {
+      notify('Renseignez au moins l’entreprise et le poste.')
+      return
+    }
+    dispatch({ type: 'ADD_APPLICATION', company, role, url: normalizeUrl(url), status })
+    notify(`Candidature enregistrée : ${role.trim()} — ${company.trim()}`)
+    setCompany('')
+    setRole('')
+    setUrl('')
+    setStatus('À postuler')
   }
 
-  const moveProject = (id: string, current: string) => {
-    const order = STATUSES.map((s) => s.id)
-    const next = order[(order.indexOf(current) + 1) % order.length]
-    dispatch({ type: 'MOVE_PROJECT', projectId: id, status: next })
-    notify(`Statut du projet mis à jour : ${STATUSES.find((s) => s.id === next)?.label}`)
+  const addProject = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!title.trim()) {
+      notify('Donnez un titre à votre projet.')
+      return
+    }
+    dispatch({ type: 'ADD_PROJECT', title, note })
+    notify(`Projet créé : ${title.trim()}`)
+    setTitle('')
+    setNote('')
   }
+
+  const applications = [...state.applications].sort((a, b) => b.date.localeCompare(a.date))
+  const counts = APPLICATION_STATUSES.map((value) => ({
+    value,
+    count: applications.filter((item) => item.status === value).length,
+  }))
+  const projects = [...state.projects].sort((a, b) => b.date.localeCompare(a.date))
 
   return (
     <div className="screen">
       <header className="screen-head">
         <h1>Réseau</h1>
-        <p>Emplois, projets d'incubation et communautés par domaine</p>
+        <p>Suivi réel de vos candidatures et de vos projets, plus les job boards africains à consulter.</p>
       </header>
 
-      <div className="segmented">
-        <button type="button" className={tab === 'jobs' ? 'active' : ''} onClick={() => setTab('jobs')}>
-          Emplois
+      <div className="segmented net-tabs">
+        <button type="button" className={tab === 'applications' ? 'active' : ''} onClick={() => setTab('applications')}>
+          Candidatures
         </button>
         <button type="button" className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}>
           Projets
         </button>
-        <button type="button" className={tab === 'community' ? 'active' : ''} onClick={() => setTab('community')}>
-          Communauté
+        <button type="button" className={tab === 'boards' ? 'active' : ''} onClick={() => setTab('boards')}>
+          Job boards
         </button>
       </div>
 
-      {tab === 'jobs' && (
-        <div className="stack">
-          <Card className="profile-ready">
-            <span className="ready-dot" />
-            <div>
-              <strong>Profil prêt à être partagé</strong>
-              <p>Votre badge {state.badges.b_argent ? 'Argent' : 'Bronze'} et vos {seed.profile.completedCoursesCount + state.extraCourses} cours validés sont joints à chaque candidature.</p>
+      {tab === 'applications' && (
+        <>
+          <Card className="tracker-card">
+            <div className="tracker-head">
+              <span className="eyebrow">Tableau de suivi</span>
+              <strong>
+                {applications.length} candidature{applications.length > 1 ? 's' : ''}
+              </strong>
+            </div>
+            <div className="tracker-statuses">
+              {counts.map((item) => (
+                <span key={item.value} className="status-count" style={{ color: STATUS_TONE[item.value] }}>
+                  <strong>{item.count}</strong>
+                  <small>{item.value}</small>
+                </span>
+              ))}
             </div>
           </Card>
-          <p className="demo-note">
-            <Icon name="info" size={13} />
-            Offres d'exemple : les entreprises sont citées à titre illustratif et aucune candidature
-            n'est transmise. Le vrai marché est sur <strong>novojob.com</strong>.
-          </p>
-          {seed.jobs.map((job) => {
-            const applied = state.appliedJobs.includes(job.id)
-            const d = domainById(job.domainId)
-            return (
-              <Card key={job.id} className="job-card">
-                <div className="job-head">
-                  <span className="job-logo" style={{ background: `${d.color}1a`, color: d.color }}>
-                    <Icon name="briefcase" size={19} />
-                  </span>
-                  <div>
-                    <h3>{job.title}</h3>
-                    <p>{job.companyName} · {job.location}</p>
+
+          <Card className="form-card">
+            <h3>Ajouter une candidature</h3>
+            <form className="net-form" onSubmit={addApplication}>
+              <label className="field">
+                <span>Entreprise</span>
+                <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Ex. Wave Mobile Money" />
+              </label>
+              <label className="field">
+                <span>Poste</span>
+                <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex. Développeur Android junior" />
+              </label>
+              <label className="field">
+                <span>Lien de l’offre (optionnel)</span>
+                <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="novojob.com/offre/…" inputMode="url" />
+              </label>
+              <label className="field">
+                <span>Statut</span>
+                <div className="select-wrap">
+                  <Icon name="briefcase" size={16} />
+                  <select value={status} onChange={(e) => setStatus(e.target.value as ApplicationStatus)}>
+                    {APPLICATION_STATUSES.map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </label>
+              <Btn type="submit" full icon="check">
+                Enregistrer la candidature
+              </Btn>
+            </form>
+          </Card>
+
+          {applications.length === 0 ? (
+            <EmptyState
+              icon="briefcase"
+              title="Aucune candidature pour l’instant"
+              text="Choisissez une offre sur un job board, puis enregistrez-la ici pour suivre son avancement."
+            />
+          ) : (
+            <div className="stack">
+              {applications.map((application) => (
+                <Card key={application.id} className="application-card">
+                  <div className="application-main">
+                    <span className="application-dot" style={{ background: STATUS_TONE[application.status] }} />
+                    <div>
+                      <h3>{application.role}</h3>
+                      <p>{application.company}</p>
+                      <div className="application-meta">
+                        <span className="status-pill" style={{ borderColor: `${STATUS_TONE[application.status]}55`, color: STATUS_TONE[application.status] }}>
+                          {application.status}
+                        </span>
+                        <small>{application.date}</small>
+                        {application.url && (
+                          <a href={application.url} target="_blank" rel="noopener noreferrer" className="link">
+                            Offre <Icon name="external" size={12} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="tags">
-                  <span className="tag">{job.type}</span>
-                  <span className="tag tag-gold">{job.salaryRange}</span>
-                  <span className="tag">{job.badgeRequired}</span>
-                </div>
-                <p className="muted small">{job.description}</p>
-                <p className="requirements"><Icon name="shield" size={13} /> {job.requirements}</p>
-                {applied ? (
-                  <p className="applied"><Icon name="check" size={14} /> Candidature simulée (démo)</p>
-                ) : (
-                  <Btn
-                    variant="soft"
-                    full
-                    icon="send"
-                    onClick={() => {
-                      dispatch({ type: 'APPLY', jobId: job.id })
-                      notify(`Candidature simulée chez ${job.companyName} : rien n'a été envoyé.`)
-                    }}
-                  >
-                    Postuler avec mon profil
-                  </Btn>
-                )}
-              </Card>
-            )
-          })}
-        </div>
+                  <div className="application-actions">
+                    <div className="select-wrap compact">
+                      <select
+                        aria-label={`Statut de ${application.role}`}
+                        value={application.status}
+                        onChange={(e) => {
+                          const next = e.target.value as ApplicationStatus
+                          dispatch({ type: 'MOVE_APPLICATION', id: application.id, status: next })
+                          notify(`Statut mis à jour : ${next}`)
+                        }}
+                      >
+                        {APPLICATION_STATUSES.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      aria-label={`Supprimer la candidature ${application.role}`}
+                      onClick={() => {
+                        dispatch({ type: 'DELETE_APPLICATION', id: application.id })
+                        notify('Candidature supprimée.')
+                      }}
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {tab === 'projects' && (
         <>
-          <p className="scroll-hint">
-            <Icon name="next" size={13} /> Glissez horizontalement pour changer d'étape
-          </p>
-          <div className="kanban">
-          {STATUSES.map((status) => {
-            const items = seed.projects.filter((p) => (state.projectStatus[p.id] ?? p.status) === status.id)
-            return (
-              <section key={status.id} className="kanban-col">
-                <header>
-                  <span className={`status-dot status-${status.id}`} />
-                  <strong>{status.label}</strong>
-                  <span className="count">{items.length}</span>
-                </header>
-                {items.map((p) => {
-                  const d = domainById(p.domainId)
-                  return (
-                    <Card key={p.id} className="project-card">
-                      <span className="eyebrow" style={{ color: d.color }}>{d.label}</span>
-                      <h3>{p.title}</h3>
-                      <p className="muted small">{p.description}</p>
-                      <div className="project-meta">
-                        <span><Icon name="target" size={13} /> {p.targetKpi}</span>
-                        <span><Icon name="users" size={13} /> {p.teamSize} membres</span>
-                        <span><Icon name="user" size={13} /> {p.mentorName}</span>
-                        <span><Icon name="code" size={13} /> {p.repoUrl}</span>
-                      </div>
-                      {p.isStartupIncubated && <span className="tag tag-gold">Startup incubée</span>}
-                      <Btn variant="ghost" full icon="next" onClick={() => moveProject(p.id, status.id)}>
-                        Faire avancer
-                      </Btn>
-                    </Card>
-                  )
-                })}
-                {items.length === 0 && <p className="kanban-empty">Aucun projet</p>}
-              </section>
-            )
-          })}
-          </div>
+          <Card className="form-card">
+            <h3>Nouveau projet</h3>
+            <form className="net-form" onSubmit={addProject}>
+              <label className="field">
+                <span>Titre</span>
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex. Application de tontine" />
+              </label>
+              <label className="field">
+                <span>Besoin ou prochaine étape</span>
+                <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex. Cherche un testeur à Cotonou" />
+              </label>
+              <Btn type="submit" full icon="sparkles">
+                Créer le projet
+              </Btn>
+            </form>
+          </Card>
+
+          {projects.length === 0 ? (
+            <EmptyState
+              icon="kanban"
+              title="Aucun projet enregistré"
+              text="Vos idées restent dans le stockage local : ajoutez-en une et faites-la avancer d’étape en étape."
+            />
+          ) : (
+            <div className="stack">
+              {projects.map((project) => (
+                <Card key={project.id} className="project-card">
+                  <div className="project-head">
+                    <h3>{project.title}</h3>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      aria-label={`Supprimer le projet ${project.title}`}
+                      onClick={() => {
+                        dispatch({ type: 'DELETE_PROJECT', id: project.id })
+                        notify('Projet supprimé.')
+                      }}
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
+                  </div>
+                  {project.note && <p>{project.note}</p>}
+                  <small className="muted">Créé le {project.date}</small>
+                  <div className="stage-chips">
+                    {PROJECT_STAGES.map((stage: ProjectStage) => (
+                      <button
+                        key={stage}
+                        type="button"
+                        className={`chip ${project.stage === stage ? 'chip-active' : ''}`}
+                        onClick={() => {
+                          dispatch({ type: 'MOVE_PROJECT', id: project.id, stage })
+                          notify(`Projet déplacé vers « ${PROJECT_STAGE_LABELS[stage]} ».`)
+                        }}
+                      >
+                        {PROJECT_STAGE_LABELS[stage]}
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </>
       )}
 
-      {tab === 'community' && (
+      {tab === 'boards' && (
         <>
-          <div className="chip-row">
-            {seed.domains
-              .filter((d) => state.messages.some((m) => m.domainId === d.id))
-              .map((d) => (
-                <Chip key={d.id} label={d.label} color={d.color} active={domain === d.id} onClick={() => setDomain(d.id)} />
-              ))}
-          </div>
-
-          <div className="chat">
-            <div className="chat-head">
-              <span className="chat-avatar" style={{ background: `${domainById(domain).color}1f`, color: domainById(domain).color }}>
-                <Icon name="chat" size={18} />
-              </span>
-              <div>
-                <strong>Salon {domainById(domain).label}</strong>
-                <p>{messages.length} messages · modération mentors</p>
-              </div>
-            </div>
-
-            <div className="chat-list">
-              {messages.length === 0 && (
-                <EmptyState icon="chat" title="Salon vide" text="Lancez la discussion avec les autres apprenants." />
-              )}
-              {messages.map((m) => (
-                <div key={m.id} className={`bubble ${m.isUser ? 'mine' : ''}`}>
-                  <div className="bubble-head">
-                    <strong>{m.senderName}</strong>
-                    <span className={`role ${m.senderRole === 'Mentor' ? 'mentor' : ''}`}>{m.senderRole}</span>
-                    <small>{m.timestampText}</small>
-                  </div>
-                  <p>{m.messageText}</p>
-                  {m.reactionsCount > 0 && <span className="reactions"><Icon name="star" size={11} /> {m.reactionsCount}</span>}
+          <Card className="board-note">
+            <Icon name="info" size={16} />
+            <p>
+              AfricaSkills ne publie pas d’offres : ces plateformes le font, avec leurs propres procédures. Les liens
+              ouvrent leur site officiel.
+            </p>
+          </Card>
+          <div className="stack">
+            {JOB_BOARDS.map((board) => (
+              <a key={board.name} href={board.url} target="_blank" rel="noopener noreferrer" className="board-card">
+                <span className="board-logo">
+                  <Icon name="globe" size={18} />
+                </span>
+                <div>
+                  <strong>{board.name}</strong>
+                  <small>{board.region}</small>
+                  <p>{board.description}</p>
                 </div>
-              ))}
-              <div ref={endRef} />
-            </div>
-
-            <form
-              className="chat-input"
-              onSubmit={(e) => {
-                e.preventDefault()
-                send()
-              }}
-            >
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder={`Écrire dans ${domainById(domain).label}…`}
-              />
-              <button type="submit" className="send-btn" aria-label="Envoyer" disabled={!draft.trim()}>
-                <Icon name="send" size={18} />
-              </button>
-            </form>
+                <Icon name="external" size={15} />
+              </a>
+            ))}
           </div>
         </>
       )}

@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { Avatar, Btn, Card } from '../components/ui'
 import {
+  ENGLISH_LEVELS,
   STORAGE_KEY,
   coursesCompleted,
   currentTier,
@@ -58,23 +59,26 @@ function Heatmap({ activity }: { activity: Record<string, number> }) {
 }
 
 export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNavigate: (path: string) => void }) {
-  const { state, dispatch, notify, logout, resetDemo } = useApp()
+  const { state, dispatch, notify, logout } = useApp()
   const account = state.account
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(account?.name ?? '')
   const [city, setCity] = useState(account?.city ?? '')
   const [phone, setPhone] = useState(account?.phone ?? '')
   const [bio, setBio] = useState(account?.bio ?? '')
+  const [level, setLevel] = useState(account?.englishLevel ?? 'A1')
+  const [confirmReset, setConfirmReset] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   if (!account) return null
 
   const tier = currentTier(state)
   const streak = streakOf(state)
-  const paidCount = seed.attestations.filter((a) => state.attestations[a.id]).length
+  const certificateCount = Object.keys(state.certificates).length
   const week = activityWindow(state.activity, 7)
   const activeDays = activityWindow(state.activity, 28).filter((d) => d.xp > 0).length
   const quizAccuracy = accuracy(state.quiz)
+  const finishedCount = coursesCompleted(state)
 
   const enrolledCourses = seed.courses
     .filter((c) => state.enrolled.includes(c.id))
@@ -88,7 +92,7 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
     .slice(0, 5)
 
   const save = () => {
-    dispatch({ type: 'UPDATE_PROFILE', patch: { name: name.trim() || account.name, city, phone, bio } })
+    dispatch({ type: 'UPDATE_PROFILE', patch: { name: name.trim() || account.name, city, phone, bio, englishLevel: level } })
     setEditing(false)
     notify('Profil mis à jour.')
   }
@@ -119,7 +123,7 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
         state: {
           ...state,
           ...candidate,
-          version: 2,
+          version: 3,
           account: state.account,
         } as Persist,
       })
@@ -143,12 +147,7 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
 
       <div className="profile-hero">
         <Avatar name={account.name} size={74} />
-        <h1>
-          {account.name}
-          {seed.profile.isVerified && (
-            <span className="verified-badge" title="Profil vérifié"><Icon name="check" size={12} /></span>
-          )}
-        </h1>
+        <h1>{account.name}</h1>
         <p>{account.role}</p>
         <div className="profile-meta">
           <span><Icon name="pin" size={14} /> {account.city}</span>
@@ -157,13 +156,14 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
         <span className="tier-pill" style={{ background: `${tier?.color}1f`, color: tier?.color, borderColor: `${tier?.color}55` }}>
           <Icon name="award" size={14} /> Badge {tier?.label ?? '—'}
         </span>
+        <small className="profile-local"><Icon name="lock" size={12} /> Compte local · ce navigateur</small>
       </div>
 
       <div className="stats-grid">
         <div className="stat"><span className="stat-icon" style={{ color: '#C2410C' }}><Icon name="sparkles" size={18} /></span><strong>{state.points.toLocaleString('fr-FR')}</strong><span>XP</span></div>
         <div className="stat"><span className="stat-icon" style={{ color: '#EA580C' }}><Icon name="flame" size={18} /></span><strong>{streak} j</strong><span>série</span></div>
         <div className="stat"><span className="stat-icon" style={{ color: '#1D4ED8' }}><Icon name="book" size={18} /></span><strong>{coursesCompleted(state)}</strong><span>cours</span></div>
-        <div className="stat"><span className="stat-icon" style={{ color: '#059669' }}><Icon name="award" size={18} /></span><strong>{paidCount}/{seed.attestations.length}</strong><span>attestations</span></div>
+        <div className="stat"><span className="stat-icon" style={{ color: '#059669' }}><Icon name="award" size={18} /></span><strong>{certificateCount}/{finishedCount}</strong><span>certificats</span></div>
       </div>
 
       <Card className="profile-arcade" onClick={() => onNavigate('#/arcade')}>
@@ -195,6 +195,19 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
             <div className="input-wrap"><Icon name="phone" size={17} /><input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           </label>
           <label className="field">
+            <span>Niveau d’anglais</span>
+            <div className="select-wrap">
+              <Icon name="globe" size={17} />
+              <select value={level} onChange={(e) => setLevel(e.target.value)}>
+                {ENGLISH_LEVELS.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </label>
+          <label className="field">
             <span>Bio</span>
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
           </label>
@@ -203,12 +216,12 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
       ) : (
         <Card>
           <span className="eyebrow">À propos</span>
-          <p className="muted">{account.bio}</p>
+          <p className="muted">{account.bio || 'Aucune bio pour l’instant. Utilisez « Modifier » pour vous présenter.'}</p>
           <div className="about-grid">
             <span><Icon name="phone" size={14} /> {account.phone}</span>
             <span><Icon name="mail" size={14} /> {account.email}</span>
             <span><Icon name="pin" size={14} /> {account.city}</span>
-            <span><Icon name="globe" size={14} /> {seed.profile.englishLevel}</span>
+            <span><Icon name="globe" size={14} /> Anglais {account.englishLevel}</span>
           </div>
         </Card>
       )}
@@ -300,13 +313,10 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
 
         <div className="setting-row">
           <div>
-            <strong>Notifications</strong>
-            <p>Rappels de révision et sessions live</p>
+            <strong>Sessions de concentration</strong>
+            <p>{state.focus.dates.length} session{state.focus.dates.length > 1 ? 's' : ''} terminée{state.focus.dates.length > 1 ? 's' : ''} · 20 XP chacune</p>
           </div>
-          <label className="switch">
-            <input type="checkbox" defaultChecked onChange={(e) => notify(e.target.checked ? 'Rappels activés.' : 'Rappels désactivés.')} />
-            <span />
-          </label>
+          <span className="focus-count-pill"><Icon name="clock" size={14} /> {state.focus.dates.length}</span>
         </div>
       </Card>
 
@@ -339,19 +349,35 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
 
         <div className="setting-row">
           <div>
-            <strong>Réinitialiser la démo</strong>
-            <p>Efface XP, notes, cartes et paiements</p>
+            <strong>Réinitialiser mes données</strong>
+            <p>Efface XP, notes, cartes, candidatures et certificats de ce compte (irréversible)</p>
           </div>
-          <Btn
-            variant="ghost"
-            icon="refresh"
-            onClick={() => {
-              resetDemo()
-              notify('Progression de démonstration réinitialisée.')
-            }}
-          >
-            Réinitialiser
-          </Btn>
+          {confirmReset ? (
+            <div className="reset-confirm">
+              <Btn
+                variant="ghost"
+                icon="close"
+                onClick={() => setConfirmReset(false)}
+              >
+                Annuler
+              </Btn>
+              <Btn
+                variant="ghost"
+                icon="trash"
+                onClick={() => {
+                  dispatch({ type: 'RESET' })
+                  setConfirmReset(false)
+                  notify('Données effacées. Vous repartez de zéro.')
+                }}
+              >
+                Confirmer
+              </Btn>
+            </div>
+          ) : (
+            <Btn variant="ghost" icon="refresh" onClick={() => setConfirmReset(true)}>
+              Réinitialiser
+            </Btn>
+          )}
         </div>
       </Card>
 

@@ -1,10 +1,10 @@
 # AfricaSkills
 
 Plateforme panafricaine d'apprentissage : cours et leçons, flashcards à répétition espacée (SM-2),
-badges et attestations, emplois et incubateur de projets, communautés par domaine.
+badges et certificats vérifiables, suivi de candidatures et de projets personnels.
 
 - **Application Android** : Kotlin 2.2, Jetpack Compose (Material 3), Room, Coroutines/StateFlow, minSdk 24 → `app/`
-- **Aperçu web interactif** : React + Vite, mêmes données et mêmes parcours → `web/`
+- **Port web fonctionnel** : React + Vite, mêmes données et parcours concrets, responsive 360→1600 px → `web/`
 - **Audit technique** du projet Android → [`ANALYSE.md`](ANALYSE.md)
 
 ## Fonctionnalités
@@ -14,40 +14,39 @@ badges et attestations, emplois et incubateur de projets, communautés par domai
 | 14 domaines | Anglais, développement, data/IA, cybersécurité, IA, design, maths, physique, lecture, ingénierie, robotique, entrepreneuriat, langues locales, soft skills |
 | Cours & leçons | 14 cours, **25 leçons** avec contenu et quiz (+50 XP par bonne réponse, +25 % de progression) |
 | Révision | Flashcards SM-2 (facteur de facilité, intervalles, répétitions) + mode éclair 30 s |
-| Certifications | 5 paliers de badges (Bronze → Diamant) selon XP, cours validés et niveau d'anglais, attestations payantes en FCFA |
-| Réseau | Offres d'emploi et candidatures, kanban de projets incubés, salons communautaires par domaine |
-| Expérience | Thème clair/sombre, profil éditable, session live FATA, fonctionnement hors-ligne |
+| Certifications | 5 paliers de badges (Bronze → Diamant) selon XP, cours validés et niveau d'anglais ; certificats de cours gratuits, vérifiables par code |
+| Réseau | Suivi réel de candidatures (5 statuts, lien d'offre), projets personnels (idée → en cours → terminé), job boards africains |
+| Expérience | Thème clair/sombre, profil éditable, session de concentration 5/15/25 min, fonctionnement hors-ligne |
 | Progression | Série de jours, objectif quotidien, précision aux quiz, carte de chaleur d'activité, plan du jour |
 | Vrai & vérifié | 15 chiffres réels sourcés (UIT, GSMA, Banque mondiale, Google…), 8 ressources gratuites, sources cliquables |
 | Salle d'arcade | Défi éclair, Vrai ou faux, Mémoire tech : XP, combos, records, confettis, 7 succès |
 
-## Aperçu web
+## Port web
 
 L'APK ne peut pas être compilé dans l'environnement de prévisualisation de l'agent : pas de JDK ni de
-SDK Android, dépôts Maven inaccessibles et wrapper Gradle non versionné. Un aperçu web fidèle des
-écrans et des parcours est fourni pour visualiser et tester l'application immédiatement.
+SDK Android, dépôts Maven inaccessibles et wrapper Gradle non versionné. Le port web reprend le
+catalogue et les règles de l'app, et ajoute des parcours réels et persistés.
 
 ```bash
 cd web
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 41 tests unitaires (SM-2, séries, badges, routage, recherche, chiffres, arcade)
+npm test         # 56 tests unitaires (SM-2, séries, badges, routage, recherche, certificats, chiffres, arcade)
 npm run build    # build de production + service worker hors-ligne
 ```
 
-**Compte de démonstration :** `ismaila@africaskills.org` / `Africa2026`
+Aucun compte de démonstration : vous créez le vôtre (nom, e-mail, ville, niveau d'anglais, mot de
+passe local). Chaque confirmation correspond à un état réellement enregistré — aucune simulation.
 
-L'aperçu a été poussé au-delà du simple rendu : routage par URL (`#/cours/:id/:leçon`), palette de
-commande `Ctrl+K`, notes de leçon persistées, révision SM-2 avec deep links, recherche insensible aux
-accents, export/import JSON de la progression, impression d'attestation A4 et PWA hors-ligne.
+Ce qui dépasse le simple rendu : routage par URL (`#/cours/:id/:leçon`, `#/verifier/<code>`), palette
+`Ctrl+K`, notes de leçon, révision SM-2, **certificats gratuits vérifiables hors-ligne**, **suivi de
+candidatures et de projets**, **sessions de concentration**, export/import JSON, impression A4 et PWA
+hors-ligne. L'interface est responsive de 360 px à 1600 px (listes en 2 colonnes sur ordinateur).
 
-Il ajoute aussi une couche de **contenu réel et sourcé** (« Vrai & vérifié » : 15 chiffres publics,
-sources UIT/GSMA/Banque mondiale/Google…) et une **salle d'arcade** (Défi éclair, Vrai ou faux,
-Mémoire tech) qui transforme ces chiffres en jeu, avec XP, combos, records et succès.
-
-Les données proviennent du code Kotlin (`web/src/data/seed.json`, généré par
-`tools/extract_seed.py`). Paiements, attestations et session live y sont **simulés**, comme dans
-l'app Android. Détails : [`web/README.md`](web/README.md).
+Le catalogue provient du code Kotlin (`web/src/data/seed.json`, généré par
+`tools/extract_seed.py`). Les chiffres de « Vrai & vérifié » sont réels et sourcés ; les offres
+d'emploi ne sont pas inventées, l'app renvoie vers les job boards africains. Détails :
+[`web/README.md`](web/README.md).
 
 ## Compiler l'application Android
 

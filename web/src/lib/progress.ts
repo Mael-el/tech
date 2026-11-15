@@ -106,22 +106,3 @@ export function accuracy(quiz: { attempts: number; correct: number }): number {
 export function totalXp(activity: Record<string, number>): number {
   return Object.values(activity).reduce((sum, value) => sum + value, 0)
 }
-
-/** Série de jours simulée pour amorcer la démo (14 jours consécutifs). */
-export function seedActivity(seedPoints: number, days = 14, today = new Date()): Record<string, number> {
-  const activity: Record<string, number> = {}
-  // Série courante : 14 jours consécutifs.
-  for (let offset = days - 1; offset >= 0; offset -= 1) {
-    const date = addDays(today, -offset)
-    const base = 35 + ((offset * 37) % 55)
-    activity[dayKey(date)] = Math.min(seedPoints, base + (offset === 0 ? 10 : 0))
-  }
-  // Historique plus ancien, volontairement discontinu (jours 18 à 70).
-  for (let offset = 18; offset <= 70; offset += 1) {
-    if (offset % 5 === 0) continue
-    if ((offset * 13) % 7 < 2) continue
-    const date = addDays(today, -offset)
-    activity[dayKey(date)] = 12 + ((offset * 29) % 48)
-  }
-  return activity
-}

@@ -7,7 +7,6 @@ import {
   dayForPoints,
   dayKey,
   recordXp,
-  seedActivity,
 } from './progress'
 
 const at = (iso: string) => new Date(`${iso}T12:00:00`)
@@ -29,11 +28,8 @@ describe('série d’apprentissage', () => {
     expect(computeStreak({ '2026-11-12': 50 }, at('2026-11-15'))).toBe(0)
   })
 
-  it('amorce 14 jours de série sans trou', () => {
-    const today = at('2026-11-15')
-    const activity = seedActivity(1850, 14, today)
-    expect(computeStreak(activity, today)).toBe(14)
-    expect(activity['2026-11-02']).toBeGreaterThan(0)
+  it('ne compte pas une série qui commence demain', () => {
+    expect(computeStreak({ '2026-11-16': 50, '2026-11-15': 40 }, at('2026-11-15'))).toBe(1)
   })
 })
 

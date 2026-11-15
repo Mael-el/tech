@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, type IconName } from './components/Icon'
-import { Avatar, Sheet, Toasts } from './components/ui'
+import { Avatar, Btn, Sheet, Toasts } from './components/ui'
 import { CommandPalette } from './components/CommandPalette'
-import { arcadePlayedToday, useApp } from './store'
+import { FOCUS_DAILY_CAP, FOCUS_XP, arcadePlayedToday, useApp } from './store'
 import { ACHIEVEMENTS } from './lib/arcade'
 import { useRoute, type Tab } from './lib/router'
 import { LoginScreen } from './screens/Login'
@@ -14,6 +14,7 @@ import { NetworkScreen } from './screens/Network'
 import { ProfileScreen } from './screens/Profile'
 import { ArcadeScreen } from './screens/Arcade'
 import { FactsScreen } from './screens/Facts'
+import { VerifyScreen } from './screens/Verify'
 
 const TABS: { id: Tab; label: string; icon: IconName; path: string }[] = [
   { id: 'home', label: 'Accueil', icon: 'home', path: '#/' },
@@ -23,88 +24,137 @@ const TABS: { id: Tab; label: string; icon: IconName; path: string }[] = [
   { id: 'network', label: 'Réseau', icon: 'globe', path: '#/reseau' },
 ]
 
-/* --------------------------- Session live --------------------------- */
+/* ------------------------- Session de concentration ------------------ */
 
-function LiveSheet({
-  open,
-  title,
-  instructor,
-  onClose,
-}: {
-  open: boolean
-  title: string
-  instructor: string
-  onClose: () => void
-}) {
-  const { notify } = useApp()
-  const [hand, setHand] = useState(false)
-  const [muted, setMuted] = useState(true)
-  const [draft, setDraft] = useState('')
-  const [messages, setMessages] = useState([
-    { author: 'Amina Diallo (Mentor)', text: "Bienvenue à tous ! Aujourd'hui nous voyons l'architecture offline avec Room." },
-    { author: 'Koffi Mensah', text: "N'hésitez pas à lever la main pour poser vos questions audio." },
-    { author: 'Fatou Sow', text: 'Présente depuis Dakar.' },
-    { author: 'David Osei', text: 'Hello from Accra! Ready for the session.' },
-  ])
+const FOCUS_DURATIONS = [5, 15, 25] as const
+
+function FocusSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { state, dispatch, notify } = useApp()
+  const [minutes, setMinutes] = useState<number>(25)
+  const [remaining, setRemaining] = useState(25 * 60)
+  const [running, setRunning] = useState(false)
+  const [finished, setFinished] = useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setRunning(false)
+      setFinished(false)
+      setRemaining(minutes * 60)
+    }
+  }, [open, minutes])
+
+  useEffect(() => {
+    if (!running) return
+    const id = window.setInterval(() => {
+      setRemaining((value) => {
+        if (value <= 1) {
+          window.clearInterval(id)
+          return 0
+        }
+        return value - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [running])
+
+  useEffect(() => {
+    if (remaining !== 0 || finished) return
+    setRunning(false)
+    setFinished(true)
+    dispatch({ type: 'FOCUS_DONE' })
+    const doneToday = state.focus.dates.filter((date) => date === new Date().toISOString().slice(0, 10)).length
+    notify(
+      doneToday + 1 > FOCUS_DAILY_CAP
+        ? 'Session terminée. Plafond de 4 sessions par jour atteint : pas de XP supplémentaire.'
+        : `Session de ${minutes} min terminée : +${FOCUS_XP} XP enregistrés.`,
+    )
+  }, [remaining, finished, dispatch, notify, minutes, state.focus.dates])
+
+  const total = minutes * 60
+  const ratio = total === 0 ? 0 : (total - remaining) / total
+  const mm = String(Math.floor(remaining / 60)).padStart(2, '0')
+  const ss = String(remaining % 60).padStart(2, '0')
+  const circumference = 2 * Math.PI * 52
 
   return (
-    <Sheet open={open} onClose={onClose} title="Classe virtuelle FATA">
-      <div className="live-sheet">
-        <div className="live-stage">
-          <span className="live-badge"><span className="live-dot" /> EN DIRECT</span>
-          <div className="live-stage-body">
-            <div className="live-avatar">AD</div>
-            <strong>{instructor}</strong>
-            <p>{title}</p>
-            <span className="live-viewers"><Icon name="users" size={14} /> 142 inscrits</span>
-          </div>
-          <div className="live-controls">
-            <button type="button" className={`live-ctrl ${muted ? '' : 'on'}`} onClick={() => setMuted((v) => !v)}>
-              <Icon name="phone" size={17} /> {muted ? 'Micro coupé' : 'Micro actif'}
-            </button>
-            <button
-              type="button"
-              className={`live-ctrl ${hand ? 'on' : ''}`}
-              onClick={() => {
-                setHand((v) => !v)
-                notify(hand ? 'Main baissée.' : 'Main levée : le mentor a reçu votre demande.')
-              }}
-            >
-              <Icon name="user" size={17} /> {hand ? 'Main levée' : 'Lever la main'}
-            </button>
-            <button type="button" className="live-ctrl danger" onClick={onClose}>
-              <Icon name="close" size={17} /> Quitter
-            </button>
-          </div>
+    <Sheet open={open} onClose={onClose} title="Session de concentration">
+      <div className="focus-sheet">
+        <div className="focus-ring-wrap">
+          <svg viewBox="0 0 120 120" className="focus-ring" aria-hidden="true">
+            <circle cx="60" cy="60" r="52" className="focus-track" />
+            <circle
+              cx="60"
+              cy="60"
+              r="52"
+              className="focus-value"
+              strokeDasharray={`${circumference * ratio} ${circumference}`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className="focus-time" aria-live="polite">
+            {mm}:{ss}
+          </span>
         </div>
 
-        <div className="live-chat">
-          {messages.map((m, i) => (
-            <div key={`${m.author}-${i}`} className="live-message">
-              <strong>{m.author}</strong>
-              <span>{m.text}</span>
-            </div>
+        <div className="segmented focus-durations">
+          {FOCUS_DURATIONS.map((duration) => (
+            <button
+              key={duration}
+              type="button"
+              className={minutes === duration ? 'active' : ''}
+              disabled={running}
+              onClick={() => {
+                setMinutes(duration)
+                setRemaining(duration * 60)
+                setFinished(false)
+              }}
+            >
+              {duration} min
+            </button>
           ))}
         </div>
 
-        <form
-          className="chat-input"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (!draft.trim()) return
-            setMessages((list) => [...list, { author: 'Vous', text: draft.trim() }])
-            setDraft('')
-          }}
-        >
-          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Poser une question écrite…" />
-          <button type="submit" className="send-btn" aria-label="Envoyer">
-            <Icon name="send" size={18} />
-          </button>
-        </form>
+        <div className="focus-actions">
+          <Btn
+            variant={running ? 'soft' : 'primary'}
+            icon={running ? 'pause' : 'play'}
+            onClick={() => {
+              if (finished) {
+                setRemaining(minutes * 60)
+                setFinished(false)
+                return
+              }
+              setRunning((value) => !value)
+            }}
+          >
+            {finished ? 'Nouvelle session' : running ? 'Mettre en pause' : remaining === total ? 'Démarrer' : 'Reprendre'}
+          </Btn>
+          <Btn
+            variant="ghost"
+            icon="close"
+            onClick={() => {
+              setRunning(false)
+              setRemaining(minutes * 60)
+              setFinished(false)
+            }}
+          >
+            Réinitialiser
+          </Btn>
+        </div>
+
+        <div className="focus-meta">
+          <span>
+            <Icon name="flame" size={14} /> {state.focus.dates.length} session{state.focus.dates.length > 1 ? 's' : ''} terminée
+            {state.focus.dates.length > 1 ? 's' : ''}
+          </span>
+          <span>
+            <Icon name="sparkles" size={14} /> +{FOCUS_XP} XP · plafond {FOCUS_DAILY_CAP}/jour
+          </span>
+        </div>
 
         <p className="disclaimer">
-          <Icon name="shield" size={14} />
-          Session simulée dans cet aperçu web : aucun flux audio/vidéo n'est diffusé.
+          <Icon name="shield" size={14} /> Le minuteur tourne dans votre navigateur ; la session n&apos;est comptée
+          qu&apos;une fois le temps écoulé, et elle reste enregistrée après fermeture.
         </p>
       </div>
     </Sheet>
@@ -137,7 +187,7 @@ export default function App() {
   const { state, dispatch, notify } = useApp()
   const [route, navigate] = useRoute()
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const [live, setLive] = useState<{ title: string; instructor: string } | null>(null)
+  const [focusOpen, setFocusOpen] = useState(false)
   const contentRef = useRef<HTMLElement | null>(null)
   const seenAchievements = useRef<string[]>(state.arcade.achievements)
 
@@ -179,7 +229,7 @@ export default function App() {
     if (!account) return null
     switch (route.tab) {
       case 'home':
-        return <DashboardScreen onNavigate={navigate} onOpenLive={() => setLive({ title: 'Architecture Logicielle & Offline-First', instructor: 'Amina Diallo' })} />
+        return <DashboardScreen onNavigate={navigate} onOpenFocus={() => setFocusOpen(true)} />
       case 'courses':
         return (
           <CoursesScreen
@@ -188,7 +238,6 @@ export default function App() {
             onOpenCourse={(id) => navigate(`#/cours/${id}`)}
             onOpenLesson={(courseId, lessonId) => navigate(`#/cours/${courseId}/${lessonId}`)}
             onBack={() => navigate('#/cours')}
-            onOpenLive={(title, instructor) => setLive({ title, instructor })}
           />
         )
       case 'cards':
@@ -203,10 +252,34 @@ export default function App() {
         return <ArcadeScreen onNavigate={navigate} />
       case 'facts':
         return <FactsScreen factId={route.factId} onNavigate={navigate} />
+      case 'verify':
+        return <VerifyScreen code={route.code} onHome={() => navigate('#/')} onVerify={(code) => navigate(`#/verifier/${code}`)} />
       default:
         return null
     }
   }, [account, route, navigate])
+
+  if (route.tab === 'verify') {
+    return (
+      <div className="stage">
+        <div className="device">
+          <div className="viewport">
+            <main className="content">
+              <VerifyScreen
+                code={route.code}
+                onHome={() => navigate('#/')}
+                onVerify={(code) => navigate(`#/verifier/${code}`)}
+              />
+            </main>
+            <Toasts bottom={18} />
+          </div>
+        </div>
+        <p className="stage-caption">
+          Vérification publique · aucune donnée n’est lue dans le navigateur du visiteur
+        </p>
+      </div>
+    )
+  }
 
   if (!account) {
     return (
@@ -220,7 +293,7 @@ export default function App() {
           </div>
         </div>
         <p className="stage-caption">
-          Aperçu web interactif · projet Android <strong>AfricaSkills</strong> (Kotlin/Compose)
+          Port web interactif · projet Android <strong>AfricaSkills</strong> (Kotlin/Compose)
         </p>
       </div>
     )
@@ -292,7 +365,7 @@ export default function App() {
                   className={route.tab === tab.id ? 'active' : ''}
                   onClick={() => navigate(tab.path)}
                 >
-                  <Icon name={tab.icon} size={21} filled={route.tab === tab.id} />
+                  <Icon name={tab.icon} size={21} />
                   <span>{tab.label}</span>
                 </button>
               ))}
@@ -302,18 +375,13 @@ export default function App() {
           <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={navigate} />
 
           <div id="sheet-root" className="sheet-root" />
-          <LiveSheet
-            open={Boolean(live)}
-            title={live?.title ?? ''}
-            instructor={live?.instructor ?? ''}
-            onClose={() => setLive(null)}
-          />
+          <FocusSheet open={focusOpen} onClose={() => setFocusOpen(false)} />
           <Toasts bottom={immersive ? 18 : 84} />
         </div>
       </div>
       <p className="stage-caption">
-        Aperçu web interactif · projet Android <strong>AfricaSkills</strong> (Kotlin/Compose) · paiements et
-        attestations simulés
+        Port web interactif · projet Android <strong>AfricaSkills</strong> (Kotlin/Compose) · données conservées
+        dans le navigateur
       </p>
     </div>
   )

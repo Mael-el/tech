@@ -1,6 +1,21 @@
-import type { Course, Flashcard, Job, Lesson, Project } from '../types'
+import type { Course, Flashcard, Lesson } from '../types'
 
-export type SearchKind = 'cours' | 'leçon' | 'carte' | 'emploi' | 'projet' | 'fait' | 'page'
+export type SearchKind = 'cours' | 'leçon' | 'carte' | 'candidature' | 'projet' | 'fait' | 'page'
+
+/** Données saisies par la personne : candidatures et projets suivis. */
+export interface SearchApplication {
+  id: string
+  role: string
+  company: string
+  status: string
+}
+
+export interface SearchProject {
+  id: string
+  title: string
+  note: string
+  stage: string
+}
 
 export interface SearchEntry {
   id: string
@@ -23,8 +38,8 @@ export function buildIndex(
   courses: Course[],
   lessons: Lesson[],
   cards: Flashcard[],
-  jobs: Job[],
-  projects: Project[],
+  applications: SearchApplication[],
+  projects: SearchProject[],
   courseTitle: (id: string) => string,
   domainLabel: (id: string) => string,
 ): SearchEntry[] {
@@ -63,14 +78,14 @@ export function buildIndex(
     })
   }
 
-  for (const job of jobs) {
+  for (const application of applications) {
     entries.push({
-      id: job.id,
-      kind: 'emploi',
-      title: job.title,
-      subtitle: `${job.companyName} · ${job.location}`,
+      id: application.id,
+      kind: 'candidature',
+      title: `${application.role} — ${application.company}`,
+      subtitle: `Candidature · ${application.status}`,
       path: '#/reseau',
-      haystack: normalize(`${job.title} ${job.companyName} ${job.description} ${job.requirements} ${job.location} ${domainLabel(job.domainId)}`),
+      haystack: normalize(`${application.role} ${application.company} ${application.status} candidature`),
     })
   }
 
@@ -79,9 +94,9 @@ export function buildIndex(
       id: project.id,
       kind: 'projet',
       title: project.title,
-      subtitle: `${domainLabel(project.domainId)} · ${project.mentorName}`,
+      subtitle: `Projet personnel · ${project.stage}`,
       path: '#/reseau',
-      haystack: normalize(`${project.title} ${project.description} ${project.mentorName} ${project.targetKpi}`),
+      haystack: normalize(`${project.title} ${project.note} ${project.stage} projet`),
     })
   }
 

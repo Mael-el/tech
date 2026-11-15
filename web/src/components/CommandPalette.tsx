@@ -8,7 +8,7 @@ const KIND_ICON: Record<string, React.ComponentProps<typeof Icon>['name']> = {
   cours: 'book',
   leçon: 'play',
   carte: 'cards',
-  emploi: 'briefcase',
+  candidature: 'briefcase',
   projet: 'kanban',
   fait: 'bulb',
   page: 'gamepad',
@@ -55,8 +55,8 @@ export function CommandPalette({
       seed.courses,
       seed.lessons,
       [...seed.flashcards, ...state.customCards],
-      seed.jobs,
-      seed.projects,
+      state.applications,
+      state.projects,
       (id) => courseById(id)?.title ?? '',
       (id) => domainById(id).label,
     )
@@ -69,7 +69,7 @@ export function CommandPalette({
       haystack: normalize(`${fact.stat} ${fact.title} ${fact.detail} ${fact.source.name}`),
     }))
     return [...base, ...factEntries, ...pages]
-  }, [state.customCards, pages])
+  }, [state.customCards, state.applications, state.projects, pages])
 
   const results = useMemo(() => searchEntries(index, query, 9), [index, query])
 

@@ -181,11 +181,11 @@ export function FactsScreen({ factId, onNavigate }: { factId?: string; onNavigat
       </section>
 
       <Card className="disclaimer-card">
-        <strong><Icon name="info" size={15} /> Données de démonstration</strong>
+        <strong><Icon name="info" size={15} /> Sources et méthode</strong>
         <p>
-          Les cours, offres d&apos;emploi, projets et attestations de cette application sont des
-          <strong> exemples fictifs</strong> — les entreprises citées dans les offres le sont à titre
-          illustratif, aucune candidature n&apos;est transmise. Les chiffres de cet écran, eux, sont réels et sourcés.
+          Chaque chiffre de cet écran est réel et renvoie à sa source primaire, consultée en novembre 2026. Les cours
+          et flashcards viennent du catalogue AfricaSkills. Aucune offre d&apos;emploi n&apos;est publiée par
+          l&apos;application : le suivi de candidatures renvoie aux job boards africains.
         </p>
       </Card>
     </div>

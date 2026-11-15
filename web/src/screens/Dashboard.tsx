@@ -11,6 +11,7 @@ import {
   streakOf,
   todayXp,
   useApp,
+  FOCUS_XP,
 } from '../store'
 import { activityWindow, accuracy } from '../lib/progress'
 import { isDue } from '../lib/sm2'
@@ -43,10 +44,10 @@ function GoalRing({ value, goal }: { value: number; goal: number }) {
 
 export function DashboardScreen({
   onNavigate,
-  onOpenLive,
+  onOpenFocus,
 }: {
   onNavigate: (path: string) => void
-  onOpenLive: () => void
+  onOpenFocus: () => void
 }) {
   const { state } = useApp()
   const account = state.account
@@ -68,7 +69,7 @@ export function DashboardScreen({
   const cards = [...seed.flashcards, ...state.customCards]
   const dueCards = cards.filter((c) => isDue(state.cards[c.id]))
 
-  const jobs = seed.jobs.filter((j) => !state.appliedJobs.includes(j.id)).slice(0, 2)
+  const applications = [...state.applications].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3)
   const unlocked = seed.badges.filter((b) => state.badges[b.id])
   const week = activityWindow(state.activity, 7)
   const weekMax = Math.max(...week.map((d) => d.xp), 1)
@@ -238,14 +239,17 @@ export function DashboardScreen({
         </>
       )}
 
-      <Card className="live-card" onClick={onOpenLive}>
-        <span className="live-dot" />
+      <Card className="focus-card" onClick={onOpenFocus}>
+        <span className="focus-card-icon"><Icon name="clock" size={20} /></span>
         <div>
-          <span className="eyebrow">Session FATA en direct</span>
-          <h3>Architecture Logicielle &amp; Offline-First</h3>
-          <p>Amina Diallo (Dakar) · 142 inscrits · demain 18h GMT</p>
+          <span className="eyebrow">Concentration</span>
+          <h3>Lancer une session de travail</h3>
+          <p>
+            Minuteur 5 / 15 / 25 min · +{FOCUS_XP} XP · {state.focus.dates.length} session
+            {state.focus.dates.length > 1 ? 's' : ''} enregistrée{state.focus.dates.length > 1 ? 's' : ''}
+          </p>
         </div>
-        <span className="live-join">Rejoindre</span>
+        <span className="focus-card-go">Démarrer</span>
       </Card>
 
       <SectionTitle title="Explorer les domaines" action="Tout voir" onAction={() => onNavigate('#/cours')} />
@@ -265,21 +269,33 @@ export function DashboardScreen({
         ))}
       </div>
 
-      <SectionTitle title="Opportunités" action="Réseau" onAction={() => onNavigate('#/reseau')} />
+      <SectionTitle title="Mes candidatures" action="Réseau" onAction={() => onNavigate('#/reseau')} />
       <div className="stack">
-        {jobs.map((job) => (
-          <Card key={job.id} className="job-mini" onClick={() => onNavigate('#/reseau')}>
-            <div className="job-logo" style={{ background: `${domainById(job.domainId).color}1a`, color: domainById(job.domainId).color }}>
+        {applications.length === 0 ? (
+          <Card className="job-mini" onClick={() => onNavigate('#/reseau')}>
+            <div className="job-logo" style={{ background: '#0E7C5A1a', color: '#0E7C5A' }}>
               <Icon name="briefcase" size={18} />
             </div>
             <div>
-              <h3>{job.title}</h3>
-              <p>{job.companyName} · {job.location}</p>
-              <span className="tag">{job.type}</span>
-              <span className="tag tag-gold">{job.salaryRange}</span>
+              <h3>Aucune candidature suivie</h3>
+              <p>Ajoutez une offre avec son lien : le suivi est enregistré sur cet appareil.</p>
+              <span className="tag">Ouvrir le suivi</span>
             </div>
           </Card>
-        ))}
+        ) : (
+          applications.map((application) => (
+            <Card key={application.id} className="job-mini" onClick={() => onNavigate('#/reseau')}>
+              <div className="job-logo" style={{ background: '#0E7C5A1a', color: '#0E7C5A' }}>
+                <Icon name="briefcase" size={18} />
+              </div>
+              <div>
+                <h3>{application.role}</h3>
+                <p>{application.company} · {application.date}</p>
+                <span className="tag">{application.status}</span>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
 
       <SectionTitle title="Vos badges" action="Certificats" onAction={() => onNavigate('#/certifications')} />
@@ -298,8 +314,9 @@ export function DashboardScreen({
         })}
       </Card>
 
-      <p className="refresh-demo">
-        <Icon name="shield" size={14} /> Données de démonstration · stockage local (Ctrl K pour rechercher)
+      <p className="storage-note">
+        <Icon name="shield" size={14} /> Progression, candidatures et certificats enregistrés sur cet appareil
+        (Ctrl K pour rechercher)
       </p>
     </div>
   )

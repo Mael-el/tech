@@ -302,8 +302,11 @@ grep -rn "firebase\|gemini" app/src/main --include=*.kt   # → aucun résultat
 - Branche `arena/7effe96d-tech` avancée en fast-forward sur `main` (`561c416` → `7b74522`) afin d'avoir
   le code Android dans l'espace de travail.
 - Ajout de ce rapport : `ANALYSE.md`.
+- Ajout du **port web fonctionnel** (`web/`) : la démo Android n'est pas reprise telle quelle — les
+  parcours simulés (compte en dur, paiement, live, chat, offres fictives) ont été supprimés et remplacés
+  par des fonctions persistées (compte local, certificats vérifiables, suivi de candidatures/projets).
 
 ### Prochaine action possible
 1. Ajouter un workflow CI qui **construit l'APK** (seule façon d'obtenir un binaire ici), ou
 2. Attaquer les correctifs **P0** (secrets, backup, mentions « démo »), ou
-3. Préparer une **version web/mobile testable** (aperçu navigateur) si l'objectif est de montrer l'app vite.
+3. Livré : **port web testable** (`web/`) — voir `web/README.md` pour le lancer et le tester.

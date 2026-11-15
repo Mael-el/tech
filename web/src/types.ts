@@ -5,6 +5,7 @@ export interface Account {
   city: string
   bio: string
   role: string
+  englishLevel: string
 }
 
 export interface Domain {

@@ -1,22 +1,11 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useState } from 'react'
 import seedJson from './data/seed.json'
-import type { Account, Flashcard, Message, Seed } from './types'
-import {
-  computeStreak,
-  dayKey,
-  englishRank,
-  recordXp,
-  seedActivity,
-} from './lib/progress'
+import type { Account, Flashcard, Seed } from './types'
+import { computeStreak, dayKey, englishRank, recordXp } from './lib/progress'
 import { initialMemory, reviewMemory, type CardMemory } from './lib/sm2'
+import { evaluateAchievements, memoryXp, quizXp, vfXp, type GameId } from './lib/arcade'
+import { certificateDate, encodeCertificate } from './lib/certificate'
 import { formatFcfa } from './lib/format'
-import {
-  evaluateAchievements,
-  memoryXp,
-  quizXp,
-  vfXp,
-  type GameId,
-} from './lib/arcade'
 
 export const seed = seedJson as unknown as Seed
 
@@ -24,26 +13,47 @@ export type { CardMemory }
 export type { GameId }
 
 /* ------------------------------------------------------------------ */
-/*  Constantes de démonstration (identiques à l'app Android)          */
+/*  Stockage local                                                    */
 /* ------------------------------------------------------------------ */
 
-export const DEMO_EMAIL = seed.profile.email
-export const DEMO_PASSWORD = 'Africa2026'
-export const STORAGE_KEY = 'africaskills.preview.v2'
-const LEGACY_KEY = 'africaskills.preview.v1'
+export const STORAGE_KEY = 'africaskills.app.v3'
+const LEGACY_KEYS = ['africaskills.preview.v2', 'africaskills.preview.v1']
 const ACCOUNTS_KEY = 'africaskills.preview.accounts'
 
 export const ENGLISH_RANK: Record<string, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5 }
-
-/* ------------------------------------------------------------------ */
-/*  État persistant                                                   */
-/* ------------------------------------------------------------------ */
+export const ENGLISH_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 export type CardState = CardMemory
 
 export interface QuizStats {
   attempts: number
   correct: number
+}
+
+export interface Certificate {
+  date: string
+  code: string
+}
+
+export type ApplicationStatus = 'À postuler' | 'Envoyée' | 'Entretien' | 'Offre' | 'Refus'
+
+export interface Application {
+  id: string
+  company: string
+  role: string
+  url: string
+  status: ApplicationStatus
+  date: string
+}
+
+export type ProjectStage = 'idée' | 'en cours' | 'terminé'
+
+export interface UserProject {
+  id: string
+  title: string
+  note: string
+  stage: ProjectStage
+  date: string
 }
 
 export interface ArcadeState {
@@ -53,21 +63,22 @@ export interface ArcadeState {
   factsRead: string[]
 }
 
+export interface FocusState {
+  dates: string[]
+}
+
 export interface Persist {
   version: number
   account: Account | null
   points: number
-  streakBase: number
-  extraCourses: number
   enrolled: string[]
   progress: Record<string, number>
   completedLessons: string[]
   cards: Record<string, CardMemory>
   badges: Record<string, string | null>
-  attestations: Record<string, { method: string; date: string }>
-  appliedJobs: string[]
-  projectStatus: Record<string, string>
-  messages: Message[]
+  certificates: Record<string, Certificate>
+  applications: Application[]
+  projects: UserProject[]
   theme: 'light' | 'dark'
   dailyGoal: number
   activity: Record<string, number>
@@ -76,6 +87,7 @@ export interface Persist {
   customCards: Flashcard[]
   quiz: QuizStats
   arcade: ArcadeState
+  focus: FocusState
 }
 
 const today = () =>
@@ -83,32 +95,31 @@ const today = () =>
 
 export function initialState(): Persist {
   return {
-    version: 2,
+    version: 3,
     account: null,
-    points: seed.profile.points,
-    streakBase: seed.profile.streakDays,
-    extraCourses: 0,
-    enrolled: seed.courses.filter((c) => c.isEnrolled).map((c) => c.id),
-    progress: Object.fromEntries(seed.courses.map((c) => [c.id, c.progressPercent])),
-    completedLessons: seed.lessons.filter((l) => l.isCompleted).map((l) => l.id),
-    cards: Object.fromEntries(seed.flashcards.map((c) => [c.id, initialMemory(c)])),
-    badges: Object.fromEntries(seed.badges.map((b) => [b.id, b.isUnlocked ? b.unlockedDate : null])),
-    attestations: Object.fromEntries(
-      seed.attestations
-        .filter((a) => a.isPaid)
-        .map((a) => [a.id, { method: a.paymentMethod ?? 'Mobile Money', date: a.issueDate }]),
-    ),
-    appliedJobs: seed.jobs.filter((j) => j.isApplied).map((j) => j.id),
-    projectStatus: Object.fromEntries(seed.projects.map((p) => [p.id, p.status])),
-    messages: seed.messages,
+    points: 0,
+    enrolled: [],
+    progress: {},
+    completedLessons: [],
+    cards: Object.fromEntries(seed.flashcards.map((card) => [card.id, initialMemory(card)])),
+    badges: Object.fromEntries(seed.badges.map((badge) => [badge.id, null])),
+    certificates: {},
+    applications: [],
+    projects: [],
     theme: 'light',
     dailyGoal: 60,
-    activity: seedActivity(seed.profile.points),
+    activity: {},
     notes: {},
     favorites: { courses: [], cards: [] },
     customCards: [],
-    quiz: { attempts: 24, correct: 19 },
-    arcade: { best: { quiz: 0, vf: 0, memoryMoves: 0 }, plays: { quiz: null, vf: null, memory: null }, achievements: [], factsRead: [] },
+    quiz: { attempts: 0, correct: 0 },
+    arcade: {
+      best: { quiz: 0, vf: 0, memoryMoves: 0 },
+      plays: { quiz: null, vf: null, memory: null },
+      achievements: [],
+      factsRead: [],
+    },
+    focus: { dates: [] },
   }
 }
 
@@ -123,74 +134,112 @@ function normalizeArcade(value: Partial<ArcadeState> | undefined): ArcadeState {
   }
 }
 
-/** Migration explicite depuis l'aperçu v1 (progression conservée). */
-function migrateV1(raw: string): Persist | null {
-  try {
-    const old = JSON.parse(raw) as Partial<Persist>
-    const base = initialState()
-    return {
-      ...base,
-      account: old.account ?? base.account,
-      points: old.points ?? base.points,
-      extraCourses: old.extraCourses ?? 0,
-      enrolled: old.enrolled ?? base.enrolled,
-      progress: old.progress ?? base.progress,
-      completedLessons: old.completedLessons ?? base.completedLessons,
-      cards: old.cards ?? base.cards,
-      badges: old.badges ?? base.badges,
-      attestations: old.attestations ?? base.attestations,
-      appliedJobs: old.appliedJobs ?? base.appliedJobs,
-      projectStatus: old.projectStatus ?? base.projectStatus,
-      messages: old.messages ?? base.messages,
-      theme: old.theme ?? 'light',
-      arcade: normalizeArcade(old.arcade),
-      version: 2,
-    }
-  } catch {
-    return null
+function normalizeAccount(value: Account | null | undefined): Account | null {
+  if (!value) return null
+  return {
+    name: value.name ?? 'Apprenant',
+    email: value.email ?? '',
+    phone: value.phone ?? '',
+    city: value.city ?? '',
+    bio: value.bio ?? '',
+    role: value.role ?? 'Apprenant AfricaSkills',
+    englishLevel: value.englishLevel ?? 'A1',
+  }
+}
+
+/** Fusionne un état stocké (v2 ou v3) avec les valeurs par défaut. */
+function normalize(raw: Partial<Persist>): Persist {
+  const base = initialState()
+  const progress = (raw.progress as Record<string, number>) ?? {}
+  const enrolled = (raw.enrolled as string[]) ?? Object.keys(progress)
+  return {
+    ...base,
+    account: normalizeAccount(raw.account as Account | null),
+    points: Number(raw.points ?? 0),
+    enrolled,
+    progress,
+    completedLessons: (raw.completedLessons as string[]) ?? [],
+    cards: (raw.cards as Record<string, CardMemory>) ?? base.cards,
+    badges: { ...base.badges, ...((raw.badges as Record<string, string | null>) ?? {}) },
+    certificates: (raw.certificates as Record<string, Certificate>) ?? {},
+    applications: Array.isArray(raw.applications) ? (raw.applications as Application[]) : [],
+    projects: Array.isArray(raw.projects) ? (raw.projects as UserProject[]) : [],
+    theme: raw.theme === 'dark' ? 'dark' : 'light',
+    dailyGoal: Number(raw.dailyGoal ?? 60),
+    activity: (raw.activity as Record<string, number>) ?? {},
+    notes: (raw.notes as Record<string, string>) ?? {},
+    favorites: {
+      courses: ((raw.favorites as Persist['favorites'])?.courses ?? []).filter((id) => Boolean(courseById(id))),
+      cards: (raw.favorites as Persist['favorites'])?.cards ?? [],
+    },
+    customCards: (raw.customCards as Flashcard[]) ?? [],
+    quiz: {
+      attempts: Number((raw.quiz as QuizStats)?.attempts ?? 0),
+      correct: Number((raw.quiz as QuizStats)?.correct ?? 0),
+    },
+    arcade: normalizeArcade(raw.arcade as Partial<ArcadeState> | undefined),
+    focus: { dates: Array.isArray((raw.focus as FocusState)?.dates) ? (raw.focus as FocusState).dates : [] },
+    version: 3,
   }
 }
 
 export function loadState(): Persist {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<Persist>
-      return { ...initialState(), ...parsed, arcade: normalizeArcade(parsed.arcade), version: 2 }
-    }
-    const legacy = localStorage.getItem(LEGACY_KEY)
-    if (legacy) {
-      const migrated = migrateV1(legacy)
-      if (migrated) {
-        localStorage.removeItem(LEGACY_KEY)
-        return migrated
-      }
+    const current = localStorage.getItem(STORAGE_KEY)
+    if (current) return normalize(JSON.parse(current) as Partial<Persist>)
+
+    for (const key of LEGACY_KEYS) {
+      const legacy = localStorage.getItem(key)
+      if (!legacy) continue
+      const migrated = normalize(JSON.parse(legacy) as Partial<Persist>)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated))
+      localStorage.removeItem(key)
+      return migrated
     }
   } catch {
-    /* stockage indisponible : on repart de la démo */
+    /* stockage indisponible : on repart d'un état vide */
   }
   return initialState()
 }
 
 /* ------------------------------------------------------------------ */
-/*  Badges                                                            */
+/*  Lecture du catalogue                                              */
 /* ------------------------------------------------------------------ */
 
-export function currentEnglishRank(): number {
-  return englishRank(seed.profile.englishLevel)
+export const domainById = (id: string) => seed.domains.find((domain) => domain.id === id) ?? seed.domains[0]
+export const tierByKey = (key: string) => seed.tiers.find((tier) => tier.name === key)
+export const badgeForTier = (key: string) => seed.badges.find((badge) => badge.tier === key)
+export const lessonsFor = (courseId: string) =>
+  seed.lessons.filter((lesson) => lesson.courseId === courseId).sort((a, b) => a.orderIndex - b.orderIndex)
+export const courseById = (id: string) => seed.courses.find((course) => course.id === id)
+
+export function allCards(state: Persist): Flashcard[] {
+  return [...seed.flashcards, ...state.customCards]
+}
+
+/* ------------------------------------------------------------------ */
+/*  Progression, badges, paliers                                      */
+/* ------------------------------------------------------------------ */
+
+export function currentEnglishRank(state: Persist): number {
+  return englishRank(state.account?.englishLevel ?? 'A1')
 }
 
 export function coursesCompleted(state: Persist): number {
-  return seed.profile.completedCoursesCount + state.extraCourses
+  return Object.values(state.progress).filter((value) => value >= 100).length
+}
+
+export function completedCourses(state: Persist) {
+  return seed.courses.filter((course) => (state.progress[course.id] ?? 0) >= 100)
 }
 
 export function tierIsUnlocked(state: Persist, tierName: string): boolean {
-  const badge = seed.badges.find((b) => b.tier === tierName)
+  const badge = seed.badges.find((item) => item.tier === tierName)
   return Boolean(badge && state.badges[badge.id])
 }
 
 export function unlockedTiers(state: Persist) {
-  return seed.tiers.filter((t) => tierIsUnlocked(state, t.name))
+  return seed.tiers.filter((tier) => tierIsUnlocked(state, tier.name))
 }
 
 export function currentTier(state: Persist) {
@@ -203,12 +252,12 @@ export function nextTier(state: Persist) {
 }
 
 function withBadges(state: Persist): Persist {
-  const rank = currentEnglishRank()
+  const rank = currentEnglishRank(state)
   const done = coursesCompleted(state)
   const badges = { ...state.badges }
   let changed = false
   for (const tier of seed.tiers) {
-    const badge = seed.badges.find((b) => b.tier === tier.name)
+    const badge = seed.badges.find((item) => item.tier === tier.name)
     if (!badge || badges[badge.id]) continue
     if (state.points >= tier.minPoints && done >= tier.minCourses && rank >= (ENGLISH_RANK[tier.requiredEnglish] ?? 0)) {
       badges[badge.id] = today()
@@ -218,15 +267,10 @@ function withBadges(state: Persist): Persist {
   return changed ? { ...state, badges } : state
 }
 
-export function streakOf(state: Persist): number {
-  return computeStreak(state.activity)
-}
-
-/** Débloque les succès atteints et crédite 25 XP par nouveau succès. */
 function withAchievements(state: Persist): Persist {
   const unlocked = evaluateAchievements({
     completedLessons: state.completedLessons.length,
-    streak: streakOf(state),
+    streak: computeStreak(state.activity),
     quizBest: state.arcade.best.quiz,
     vfBest: state.arcade.best.vf,
     memoryBestMoves: state.arcade.best.memoryMoves,
@@ -244,16 +288,24 @@ function withAchievements(state: Persist): Persist {
   })
 }
 
+export function streakOf(state: Persist): number {
+  return computeStreak(state.activity)
+}
+
 export function todayXp(state: Persist): number {
   return state.activity[dayKey(new Date())] ?? 0
 }
 
 /* ------------------------------------------------------------------ */
-/*  Cartes                                                            */
+/*  Attestations                                                      */
 /* ------------------------------------------------------------------ */
 
-export function allCards(state: Persist): Flashcard[] {
-  return [...seed.flashcards, ...state.customCards]
+export function certificateFor(state: Persist, courseId: string): Certificate | undefined {
+  return state.certificates[courseId]
+}
+
+export function verificationLink(code: string): string {
+  return `${window.location.origin}${window.location.pathname}#/verifier/${code}`
 }
 
 /* ------------------------------------------------------------------ */
@@ -262,16 +314,21 @@ export function allCards(state: Persist): Flashcard[] {
 
 type Action =
   | { type: 'LOGIN'; account: Account }
+  | { type: 'REGISTER'; account: Account }
   | { type: 'LOGOUT' }
   | { type: 'THEME'; theme: 'light' | 'dark' }
   | { type: 'ENROLL'; courseId: string }
   | { type: 'COMPLETE_LESSON'; lessonId: string; courseId: string }
   | { type: 'QUIZ_ANSWER'; correct: boolean }
   | { type: 'REVIEW_CARD'; cardId: string; quality: number }
-  | { type: 'PAY'; attestationId: string; method: string }
-  | { type: 'APPLY'; jobId: string }
-  | { type: 'MOVE_PROJECT'; projectId: string; status: string }
-  | { type: 'SEND_MESSAGE'; domainId: string; text: string; author: string }
+  | { type: 'CERTIFY'; courseId: string }
+  | { type: 'ADD_APPLICATION'; company: string; role: string; url: string; status: ApplicationStatus }
+  | { type: 'MOVE_APPLICATION'; id: string; status: ApplicationStatus }
+  | { type: 'DELETE_APPLICATION'; id: string }
+  | { type: 'ADD_PROJECT'; title: string; note: string }
+  | { type: 'MOVE_PROJECT'; id: string; stage: ProjectStage }
+  | { type: 'DELETE_PROJECT'; id: string }
+  | { type: 'FOCUS_DONE' }
   | { type: 'UPDATE_PROFILE'; patch: Partial<Account> }
   | { type: 'SET_NOTE'; lessonId: string; text: string }
   | { type: 'TOGGLE_FAV_COURSE'; courseId: string }
@@ -284,10 +341,18 @@ type Action =
   | { type: 'IMPORT'; state: Persist }
   | { type: 'RESET' }
 
+export const FOCUS_XP = 20
+export const FOCUS_DAILY_CAP = 4
+
 function baseReducer(state: Persist, action: Action): Persist {
   switch (action.type) {
     case 'LOGIN':
       return { ...state, account: action.account }
+
+    case 'REGISTER': {
+      const fresh = initialState()
+      return { ...fresh, account: action.account, theme: state.theme }
+    }
 
     case 'LOGOUT':
       return { ...state, account: null }
@@ -307,7 +372,6 @@ function baseReducer(state: Persist, action: Action): Persist {
       const already = state.completedLessons.includes(action.lessonId)
       const oldProgress = state.progress[action.courseId] ?? 0
       const newProgress = already ? oldProgress : Math.min(100, oldProgress + 25)
-      const newlyFinished = oldProgress < 100 && newProgress >= 100
       const gained = already ? 0 : 50
       return withBadges({
         ...state,
@@ -315,7 +379,6 @@ function baseReducer(state: Persist, action: Action): Persist {
         activity: recordXp(state.activity, gained),
         completedLessons: already ? state.completedLessons : [...state.completedLessons, action.lessonId],
         progress: { ...state.progress, [action.courseId]: newProgress },
-        extraCourses: state.extraCourses + (newlyFinished ? 1 : 0),
       })
     }
 
@@ -330,8 +393,8 @@ function baseReducer(state: Persist, action: Action): Persist {
 
     case 'REVIEW_CARD': {
       const existing = state.cards[action.cardId]
-      const custom = state.customCards.find((c) => c.id === action.cardId)
-      const source = seed.flashcards.find((c) => c.id === action.cardId) ?? custom
+      const custom = state.customCards.find((card) => card.id === action.cardId)
+      const source = seed.flashcards.find((card) => card.id === action.cardId) ?? custom
       if (!source) return state
       const memory = existing ?? initialMemory(source)
       const next = reviewMemory(memory, action.quality)
@@ -343,38 +406,76 @@ function baseReducer(state: Persist, action: Action): Persist {
       })
     }
 
-    case 'PAY':
+    case 'CERTIFY': {
+      if (!state.account || state.certificates[action.courseId]) return state
+      const course = courseById(action.courseId)
+      if (!course || (state.progress[action.courseId] ?? 0) < 100) return state
+      const date = certificateDate()
+      const code = encodeCertificate({
+        v: 1,
+        n: state.account.name,
+        c: course.id,
+        t: course.title,
+        d: date,
+      })
+      return { ...state, certificates: { ...state.certificates, [action.courseId]: { date, code } } }
+    }
+
+    case 'ADD_APPLICATION': {
+      if (!action.company.trim() || !action.role.trim()) return state
+      const application: Application = {
+        id: `app_${Date.now()}`,
+        company: action.company.trim(),
+        role: action.role.trim(),
+        url: action.url.trim(),
+        status: action.status,
+        date: certificateDate(),
+      }
+      return { ...state, applications: [application, ...state.applications] }
+    }
+
+    case 'MOVE_APPLICATION':
       return {
         ...state,
-        attestations: {
-          ...state.attestations,
-          [action.attestationId]: { method: action.method, date: today() },
-        },
+        applications: state.applications.map((item) =>
+          item.id === action.id ? { ...item, status: action.status } : item,
+        ),
       }
 
-    case 'APPLY':
-      return state.appliedJobs.includes(action.jobId)
-        ? state
-        : { ...state, appliedJobs: [...state.appliedJobs, action.jobId] }
+    case 'DELETE_APPLICATION':
+      return { ...state, applications: state.applications.filter((item) => item.id !== action.id) }
+
+    case 'ADD_PROJECT': {
+      if (!action.title.trim()) return state
+      const project: UserProject = {
+        id: `proj_${Date.now()}`,
+        title: action.title.trim(),
+        note: action.note.trim(),
+        stage: 'idée',
+        date: certificateDate(),
+      }
+      return { ...state, projects: [project, ...state.projects] }
+    }
 
     case 'MOVE_PROJECT':
       return {
         ...state,
-        projectStatus: { ...state.projectStatus, [action.projectId]: action.status },
+        projects: state.projects.map((item) => (item.id === action.id ? { ...item, stage: action.stage } : item)),
       }
 
-    case 'SEND_MESSAGE': {
-      const message: Message = {
-        id: `m_${Date.now()}`,
-        domainId: action.domainId,
-        senderName: action.author,
-        senderRole: 'Apprenant',
-        messageText: action.text,
-        timestampText: "À l'instant",
-        isUser: true,
-        reactionsCount: 0,
-      }
-      return { ...state, messages: [...state.messages, message] }
+    case 'DELETE_PROJECT':
+      return { ...state, projects: state.projects.filter((item) => item.id !== action.id) }
+
+    case 'FOCUS_DONE': {
+      const key = dayKey(new Date())
+      const todayCount = state.focus.dates.filter((date) => date === key).length
+      const gained = todayCount < FOCUS_DAILY_CAP ? FOCUS_XP : 0
+      return withBadges({
+        ...state,
+        points: state.points + gained,
+        activity: gained ? recordXp(state.activity, gained) : state.activity,
+        focus: { dates: [...state.focus.dates, key] },
+      })
     }
 
     case 'UPDATE_PROFILE':
@@ -419,7 +520,7 @@ function baseReducer(state: Persist, action: Action): Persist {
     case 'DELETE_CARD':
       return {
         ...state,
-        customCards: state.customCards.filter((c) => c.id !== action.cardId),
+        customCards: state.customCards.filter((card) => card.id !== action.cardId),
         favorites: { ...state.favorites, cards: state.favorites.cards.filter((id) => id !== action.cardId) },
       }
 
@@ -466,7 +567,7 @@ function baseReducer(state: Persist, action: Action): Persist {
     }
 
     case 'IMPORT':
-      return { ...action.state, arcade: normalizeArcade(action.state.arcade), version: 2 }
+      return normalize(action.state)
 
     case 'RESET': {
       const fresh = initialState()
@@ -495,7 +596,7 @@ export function arcadePlayedToday(state: Persist, game: GameId): boolean {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Authentification locale (démo)                                    */
+/*  Comptes locaux                                                    */
 /* ------------------------------------------------------------------ */
 
 function hash(value: string): string {
@@ -510,6 +611,7 @@ interface StoredAccount {
   city: string
   phone: string
   pw: string
+  englishLevel?: string
 }
 
 function readAccounts(): StoredAccount[] {
@@ -522,17 +624,6 @@ function readAccounts(): StoredAccount[] {
 
 function writeAccounts(accounts: StoredAccount[]) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
-}
-
-export function profileAccount(): Account {
-  return {
-    name: seed.profile.fullName,
-    email: seed.profile.email,
-    phone: seed.profile.phone,
-    city: seed.profile.location,
-    bio: seed.profile.bio,
-    role: seed.profile.role,
-  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -552,9 +643,9 @@ interface Ctx {
   notify: (message: string, error?: boolean) => void
   dismissToast: (id: number) => void
   login: (email: string, password: string) => string | null
-  register: (name: string, email: string, password: string, city: string) => string | null
+  register: (name: string, email: string, password: string, city: string, englishLevel: string) => string | null
   logout: () => void
-  resetDemo: () => void
+  resetData: () => void
 }
 
 const AppContext = createContext<Ctx | null>(null)
@@ -579,77 +670,81 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const notify = (message: string, error = false) => {
     const id = Date.now() + Math.random()
     setToasts((list) => [...list, { id, message, error }].slice(-3))
-    window.setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 3600)
+    window.setTimeout(() => setToasts((list) => list.filter((toast) => toast.id !== id)), 3600)
   }
 
-  const dismissToast = (id: number) => setToasts((list) => list.filter((t) => t.id !== id))
+  const dismissToast = (id: number) => setToasts((list) => list.filter((toast) => toast.id !== id))
 
   const login = (email: string, password: string): string | null => {
     const clean = email.trim().toLowerCase()
     if (!clean || !clean.includes('@')) return 'Veuillez saisir une adresse e-mail valide.'
     if (password.length < 6) return 'Le mot de passe doit contenir au moins 6 caractères.'
 
-    if (clean === DEMO_EMAIL && password === DEMO_PASSWORD) {
-      dispatch({ type: 'LOGIN', account: profileAccount() })
-      return null
-    } else {
-      const account = readAccounts().find((a) => a.email === clean)
-      if (!account || account.pw !== hash(password)) {
-        return 'Identifiants incorrects. Utilisez le compte de démonstration ou créez un compte.'
-      }
-      dispatch({
-        type: 'LOGIN',
-        account: {
-          name: account.name,
-          email: account.email,
-          phone: account.phone,
-          city: account.city,
-          bio: 'Nouvel apprenant AfricaSkills.',
-          role: 'Apprenant AfricaSkills',
-        },
-      })
-      return null
+    const account = readAccounts().find((item) => item.email === clean)
+    if (!account || account.pw !== hash(password)) {
+      return 'E-mail ou mot de passe incorrect. Créez un compte si c’est votre première visite.'
     }
+
+    dispatch({
+      type: 'LOGIN',
+      account: {
+        name: account.name,
+        email: account.email,
+        phone: account.phone,
+        city: account.city,
+        bio: 'Apprenant AfricaSkills.',
+        role: 'Apprenant AfricaSkills',
+        englishLevel: account.englishLevel ?? 'A1',
+      },
+    })
+    return null
   }
 
-  const register = (name: string, email: string, password: string, city: string): string | null => {
+  const register = (
+    name: string,
+    email: string,
+    password: string,
+    city: string,
+    englishLevel: string,
+  ): string | null => {
     const cleanName = name.trim()
     const cleanEmail = email.trim().toLowerCase()
     const cleanCity = city.trim() || 'Cotonou, Bénin'
     if (cleanName.length < 2) return 'Veuillez entrer votre nom complet.'
     if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) return 'Veuillez saisir une adresse e-mail valide.'
     if (password.length < 6) return 'Le mot de passe doit contenir au moins 6 caractères.'
-    if (cleanEmail === DEMO_EMAIL || readAccounts().some((a) => a.email === cleanEmail)) {
+    if (readAccounts().some((item) => item.email === cleanEmail)) {
       return 'Un compte existe déjà avec cet e-mail.'
     }
     const account: StoredAccount = {
       name: cleanName,
       email: cleanEmail,
       city: cleanCity,
-      phone: '+229 90 00 00 00',
+      phone: '',
       pw: hash(password),
+      englishLevel,
     }
     writeAccounts([...readAccounts(), account])
     dispatch({
-      type: 'LOGIN',
+      type: 'REGISTER',
       account: {
         name: cleanName,
         email: cleanEmail,
-        phone: account.phone,
+        phone: '',
         city: cleanCity,
-        bio: 'Nouvel apprenant AfricaSkills.',
+        bio: '',
         role: 'Apprenant AfricaSkills',
+        englishLevel,
       },
     })
     return null
   }
 
   const logout = () => dispatch({ type: 'LOGOUT' })
-
-  const resetDemo = () => dispatch({ type: 'RESET' })
+  const resetData = () => dispatch({ type: 'RESET' })
 
   const value = useMemo(
-    () => ({ state, dispatch, toasts, notify, dismissToast, login, register, logout, resetDemo }),
+    () => ({ state, dispatch, toasts, notify, dismissToast, login, register, logout, resetData }),
     [state, toasts],
   )
 
@@ -661,15 +756,6 @@ export function useApp(): Ctx {
   if (!ctx) throw new Error('useApp must be used inside AppProvider')
   return ctx
 }
-
-/* Helpers de lecture du seed ------------------------------------------ */
-
-export const domainById = (id: string) => seed.domains.find((d) => d.id === id) ?? seed.domains[0]
-export const tierByKey = (key: string) => seed.tiers.find((t) => t.name === key)
-export const badgeForTier = (key: string) => seed.badges.find((b) => b.tier === key)
-export const lessonsFor = (courseId: string) =>
-  seed.lessons.filter((l) => l.courseId === courseId).sort((a, b) => a.orderIndex - b.orderIndex)
-export const courseById = (id: string) => seed.courses.find((c) => c.id === id)
 
 export { formatFcfa }
 export { initials } from './lib/format'
