@@ -1,0 +1,6 @@
+{
+  "name": "AfricaSkills",
+  "description": "Plateforme panafricaine d'apprentissage, certification par badges, attestations vérifiées, flashcards SM-2, hackathons et opportunités d'emploi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
