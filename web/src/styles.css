@@ -453,11 +453,13 @@ p { margin: 0; line-height: 1.5; }
 /* --------------------------------- Login -------------------------------- */
 
 .login {
+  min-height: 100%;
   height: 100%;
   overflow-y: auto;
   padding: 26px 18px 30px;
   display: flex;
   flex-direction: column;
+  justify-content: safe center;
   gap: 16px;
   background:
     radial-gradient(500px 320px at 80% -10%, rgba(251, 146, 60, 0.18), transparent 70%),
@@ -500,7 +502,14 @@ p { margin: 0; line-height: 1.5; }
 
 
 
-.login-note { margin: 0; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.6; }
+.login-note {
+  margin: 0 auto;
+  max-width: 380px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
 
 /* ------------------------------- Dashboard ------------------------------- */
 
