@@ -1,0 +1,537 @@
+{
+  "quiz": [
+    {
+      "id": "q_01",
+      "question": "Quelle part de la population africaine utilisait Internet en 2024 ?",
+      "options": [
+        "68 %",
+        "48 %",
+        "38 %",
+        "58 %"
+      ],
+      "answer": 2,
+      "explanation": "L'Afrique reste la région la moins connectée : 38 % en ligne, contre 68 % dans le monde (UIT, 2024).",
+      "factId": "f_itu_38"
+    },
+    {
+      "id": "q_02",
+      "question": "Quelle est la part de la population mondiale en ligne en 2024 ?",
+      "options": [
+        "48 %",
+        "68 %",
+        "88 %",
+        "38 %"
+      ],
+      "answer": 1,
+      "explanation": "5,5 milliards de personnes, soit 68 % de la population mondiale, utilisaient Internet en 2024.",
+      "factId": "f_itu_38"
+    },
+    {
+      "id": "q_03",
+      "question": "En Afrique, quel est l'écart d'usage d'Internet entre villes et campagnes ?",
+      "options": [
+        "45 % en ville contre 30 % en rural",
+        "57 % en ville contre 23 % en rural",
+        "72 % en ville contre 41 % en rural",
+        "80 % en ville contre 60 % en rural"
+      ],
+      "answer": 1,
+      "explanation": "C'est le plus grand écart urbain/rural au monde (UIT, 2024).",
+      "factId": "f_itu_38"
+    },
+    {
+      "id": "q_04",
+      "question": "Quelle part de la population africaine est couverte par la 5G ?",
+      "options": [
+        "5 %",
+        "25 %",
+        "40 %",
+        "11 %"
+      ],
+      "answer": 3,
+      "explanation": "La 5G reste urbaine ; 70 % de la population est couverte par la 4G.",
+      "factId": "f_itu_5g"
+    },
+    {
+      "id": "q_05",
+      "question": "Quelle proportion d'Africains n'a aucune couverture mobile large bande ?",
+      "options": [
+        "44 %",
+        "24 %",
+        "14 %",
+        "4 %"
+      ],
+      "answer": 2,
+      "explanation": "14 % au total, et jusqu'à 25 % en zone rurale (UIT, 2025).",
+      "factId": "f_itu_5g"
+    },
+    {
+      "id": "q_06",
+      "question": "Quelle valeur le mobile money a-t-il traitée en Afrique subsaharienne en 2024 ?",
+      "options": [
+        "550 milliards $",
+        "110 milliards $",
+        "1 100 milliards $",
+        "2 200 milliards $"
+      ],
+      "answer": 2,
+      "explanation": "Environ 1 100 Md$ pour 80 milliards de transactions (GSMA, 2025).",
+      "factId": "f_gsma_11"
+    },
+    {
+      "id": "q_07",
+      "question": "Combien de comptes mobile money sont actifs sur 30 jours en Afrique subsaharienne ?",
+      "options": [
+        "483 millions",
+        "83 millions",
+        "283 millions",
+        "183 millions"
+      ],
+      "answer": 2,
+      "explanation": "Sur 1,1 milliard de comptes enregistrés, 283 millions sont actifs sur 30 jours.",
+      "factId": "f_gsma_11"
+    },
+    {
+      "id": "q_08",
+      "question": "Quelle part de la valeur mondiale du mobile money l'Afrique subsaharienne représente-t-elle ?",
+      "options": [
+        "Environ la moitié",
+        "Environ deux tiers",
+        "Environ un quart",
+        "Plus de 90 %"
+      ],
+      "answer": 1,
+      "explanation": "La région concentre près de 66 % de la valeur mondiale des transactions.",
+      "factId": "f_gsma_11"
+    },
+    {
+      "id": "q_09",
+      "question": "Combien de clients M-Pesa étaient actifs au Kenya en mars 2025 ?",
+      "options": [
+        "52,3 millions",
+        "12,4 millions",
+        "22,1 millions",
+        "35,8 millions"
+      ],
+      "answer": 3,
+      "explanation": "35,82 millions de clients actifs à 30 jours, en hausse de 10,5 % (Safaricom, 2025).",
+      "factId": "f_mpesa"
+    },
+    {
+      "id": "q_10",
+      "question": "Quelle part du chiffre d'affaires des services de Safaricom Kenya vient de M-Pesa ?",
+      "options": [
+        "70 %",
+        "25 %",
+        "12 %",
+        "44,2 %"
+      ],
+      "answer": 3,
+      "explanation": "M-Pesa pèse 44,2 % des revenus de services au Kenya sur l'exercice 2024-2025.",
+      "factId": "f_mpesa"
+    },
+    {
+      "id": "q_11",
+      "question": "Combien d'agents M-Pesa Safaricom comptait-il au Kenya en 2025 ?",
+      "options": [
+        "298 890",
+        "29 890",
+        "598 890",
+        "98 890"
+      ],
+      "answer": 0,
+      "explanation": "Le réseau d'agents a progressé de 14,1 % sur un an.",
+      "factId": "f_mpesa"
+    },
+    {
+      "id": "q_12",
+      "question": "Quelle valorisation Wave a-t-elle atteinte en 2021 ?",
+      "options": [
+        "1,0 milliard $",
+        "1,7 milliard $",
+        "0,5 milliard $",
+        "3,0 milliards $"
+      ],
+      "answer": 1,
+      "explanation": "Après une levée de 200 M$, Wave devient la première licorne d'Afrique francophone.",
+      "factId": "f_wave"
+    },
+    {
+      "id": "q_13",
+      "question": "Wave est la première licorne d'Afrique…",
+      "options": [
+        "arabophone",
+        "lusophone",
+        "francophone",
+        "anglophone"
+      ],
+      "answer": 2,
+      "explanation": "Basée au Sénégal, Wave a été fondée en 2018 et opère dans cinq pays d'Afrique de l'Ouest.",
+      "factId": "f_wave"
+    },
+    {
+      "id": "q_14",
+      "question": "Quelle part des adultes d'Afrique subsaharienne avait un compte mobile money en 2021 ?",
+      "options": [
+        "13 %",
+        "33 %",
+        "23 %",
+        "53 %"
+      ],
+      "answer": 1,
+      "explanation": "Chiffre de référence de la Banque mondiale (Global Findex 2021).",
+      "factId": "f_findex"
+    },
+    {
+      "id": "q_15",
+      "question": "Combien d'internautes le Bénin comptait-il fin 2025 ?",
+      "options": [
+        "4,80 millions",
+        "1,2 million",
+        "2,4 millions",
+        "8,1 millions"
+      ],
+      "answer": 0,
+      "explanation": "4,80 millions d'internautes, soit 32,2 % de la population (DataReportal, 2026).",
+      "factId": "f_benin_net"
+    },
+    {
+      "id": "q_16",
+      "question": "Quel est le taux de pénétration d'Internet au Bénin fin 2025 ?",
+      "options": [
+        "12,2 %",
+        "32,2 %",
+        "52,2 %",
+        "22,2 %"
+      ],
+      "answer": 1,
+      "explanation": "Environ deux Béninois sur trois restent hors ligne.",
+      "factId": "f_benin_net"
+    },
+    {
+      "id": "q_17",
+      "question": "Quel est l'âge médian au Bénin ?",
+      "options": [
+        "38 ans",
+        "31 ans",
+        "18 ans",
+        "24 ans"
+      ],
+      "answer": 2,
+      "explanation": "La moitié de la population a moins de 18 ans (DataReportal, 2026).",
+      "factId": "f_benin_net"
+    },
+    {
+      "id": "q_18",
+      "question": "En quelle année Sèmè City a-t-elle été lancée ?",
+      "options": [
+        "2017",
+        "2012",
+        "2023",
+        "2020"
+      ],
+      "answer": 0,
+      "explanation": "Le campus Sèmè-One a ouvert à Cotonou en 2020, dans le cadre de « Bénin Révélé ».",
+      "factId": "f_seme"
+    },
+    {
+      "id": "q_19",
+      "question": "Combien de pays le câble 2Africa relie-t-il ?",
+      "options": [
+        "12",
+        "33",
+        "54",
+        "21"
+      ],
+      "answer": 1,
+      "explanation": "2Africa ceinture l'Afrique et relie 33 pays d'Afrique, d'Europe et d'Asie.",
+      "factId": "f_2africa"
+    },
+    {
+      "id": "q_20",
+      "question": "Quelle est la longueur du câble 2Africa ?",
+      "options": [
+        "25 000 km",
+        "90 000 km",
+        "12 000 km",
+        "45 000 km"
+      ],
+      "answer": 3,
+      "explanation": "Plus de 45 000 km : le plus long système de câble sous-marin au monde.",
+      "factId": "f_2africa"
+    },
+    {
+      "id": "q_21",
+      "question": "Combien de diplômés ALX revendique-t-elle ?",
+      "options": [
+        "347 100",
+        "47 100",
+        "247 100",
+        "147 100"
+      ],
+      "answer": 0,
+      "explanation": "ALX met aussi en avant 257 900 jeunes en emploi et 60 100 emplois créés via l'entrepreneuriat.",
+      "factId": "f_alx"
+    },
+    {
+      "id": "q_22",
+      "question": "Combien d'emplois ALX dit-elle avoir créés via l'entrepreneuriat ?",
+      "options": [
+        "160 100",
+        "60 100",
+        "16 100",
+        "6 100"
+      ],
+      "answer": 1,
+      "explanation": "43 400 jeunes entrepreneurs ont été soutenus, générant 60 100 emplois.",
+      "factId": "f_alx"
+    },
+    {
+      "id": "q_23",
+      "question": "Quel objectif Google s'est-il fixé avec Skilling Africa ?",
+      "options": [
+        "300 000 personnes d'ici 2027",
+        "10 millions d'ici 2035",
+        "3 millions de personnes formées d'ici 2030",
+        "1 million d'ici 2030"
+      ],
+      "answer": 2,
+      "explanation": "Google revendique déjà plus de 7 millions de jeunes Africains formés au numérique.",
+      "factId": "f_skilling"
+    },
+    {
+      "id": "q_24",
+      "question": "Combien de programmes Google le hub Skilling Africa regroupe-t-il ?",
+      "options": [
+        "Plus de 15",
+        "5",
+        "30",
+        "10"
+      ],
+      "answer": 0,
+      "explanation": "Google Career Certificates, Hustle Academy, Google Cloud Skills et d'autres parcours y sont réunis.",
+      "factId": "f_skilling"
+    },
+    {
+      "id": "q_25",
+      "question": "Skilling Africa with Google peut-il s'utiliser hors-ligne ?",
+      "options": [
+        "Seulement sur ordinateur",
+        "Non, il faut être connecté en permanence",
+        "Seulement en 5G",
+        "Oui, après téléchargement en Wi-Fi"
+      ],
+      "answer": 3,
+      "explanation": "Les leçons se téléchargent en Wi-Fi puis se consultent sans données mobiles.",
+      "factId": "f_skilling"
+    },
+    {
+      "id": "q_26",
+      "question": "Combien de startups Google for Startups Accelerator Africa a-t-il accompagnées depuis 2018 ?",
+      "options": [
+        "Plus de 180",
+        "Environ 40",
+        "Plus de 500",
+        "Environ 80"
+      ],
+      "answer": 0,
+      "explanation": "180+ startups de 17 pays, 350 M$ levés et 3 700 emplois créés.",
+      "factId": "f_accel"
+    },
+    {
+      "id": "q_27",
+      "question": "Quel montant les startups de l'accélérateur Google ont-elles levé au total ?",
+      "options": [
+        "900 millions $",
+        "35 millions $",
+        "120 millions $",
+        "350 millions $"
+      ],
+      "answer": 3,
+      "explanation": "Et la 10e cohorte (2026) donne accès à des TPU et jusqu'à 350 000 $ de crédits Cloud.",
+      "factId": "f_accel"
+    },
+    {
+      "id": "q_28",
+      "question": "Combien les startups africaines ont-elles levé en 2025 ?",
+      "options": [
+        "2,2 milliards $",
+        "1,2 milliard $",
+        "5,2 milliards $",
+        "3,2 milliards $"
+      ],
+      "answer": 3,
+      "explanation": "En hausse de 40 % sur un an, avec 69 tours supérieurs à 10 M$.",
+      "factId": "f_funding"
+    },
+    {
+      "id": "q_29",
+      "question": "Quelle part du financement 2025 les quatre pays phares concentrent-ils ?",
+      "options": [
+        "42 %",
+        "62 %",
+        "82 %",
+        "95 %"
+      ],
+      "answer": 2,
+      "explanation": "Kenya, Égypte, Afrique du Sud et Nigeria captent l'essentiel des capitaux.",
+      "factId": "f_funding"
+    },
+    {
+      "id": "q_30",
+      "question": "Quelle part des entreprises africaines déclare manquer de profils IA ?",
+      "options": [
+        "50 %",
+        "70 %",
+        "Plus de 90 %",
+        "30 %"
+      ],
+      "answer": 2,
+      "explanation": "Google estime l'opportunité économique de l'IA à 2 900 Md$ pour le continent.",
+      "factId": "f_ia"
+    }
+  ],
+  "trueFalse": [
+    {
+      "id": "tf_01",
+      "statement": "En 2024, 38 % de la population africaine utilisait Internet.",
+      "answer": true,
+      "explanation": "C'est le chiffre de l'UIT, contre 68 % au niveau mondial.",
+      "factId": "f_itu_38"
+    },
+    {
+      "id": "tf_02",
+      "statement": "L'Afrique est la région la plus connectée du monde.",
+      "answer": false,
+      "explanation": "C'est la moins connectée : 38 % en ligne en 2024.",
+      "factId": "f_itu_38"
+    },
+    {
+      "id": "tf_03",
+      "statement": "L'Afrique subsaharienne concentre environ deux tiers de la valeur mondiale du mobile money.",
+      "answer": true,
+      "explanation": "Environ 1 100 Md$ de transactions en 2024.",
+      "factId": "f_gsma_11"
+    },
+    {
+      "id": "tf_04",
+      "statement": "M-Pesa comptait moins de 10 millions de clients actifs au Kenya en 2025.",
+      "answer": false,
+      "explanation": "35,82 millions de clients actifs à 30 jours en mars 2025.",
+      "factId": "f_mpesa"
+    },
+    {
+      "id": "tf_05",
+      "statement": "Wave est devenue la première licorne d'Afrique francophone.",
+      "answer": true,
+      "explanation": "Valorisation de 1,7 Md$ en 2021.",
+      "factId": "f_wave"
+    },
+    {
+      "id": "tf_06",
+      "statement": "Tous les adultes d'Afrique subsaharienne possèdent un compte mobile money.",
+      "answer": false,
+      "explanation": "33 % des adultes en avaient un en 2021 (Global Findex).",
+      "factId": "f_findex"
+    },
+    {
+      "id": "tf_07",
+      "statement": "Au Bénin, environ un habitant sur trois utilise Internet.",
+      "answer": true,
+      "explanation": "32,2 % de la population fin 2025.",
+      "factId": "f_benin_net"
+    },
+    {
+      "id": "tf_08",
+      "statement": "Le campus Sèmè-One de Sèmè City se trouve à Cotonou.",
+      "answer": true,
+      "explanation": "Il a ouvert en 2020 à Cotonou.",
+      "factId": "f_seme"
+    },
+    {
+      "id": "tf_09",
+      "statement": "Le câble 2Africa mesure 4 500 km.",
+      "answer": false,
+      "explanation": "Il mesure plus de 45 000 km et relie 33 pays.",
+      "factId": "f_2africa"
+    },
+    {
+      "id": "tf_10",
+      "statement": "ALX revendique plus de 300 000 diplômés.",
+      "answer": true,
+      "explanation": "347 100 diplômés revendiqués par ALX.",
+      "factId": "f_alx"
+    },
+    {
+      "id": "tf_11",
+      "statement": "Skilling Africa with Google est payant.",
+      "answer": false,
+      "explanation": "Le hub est gratuit et permet même de réviser hors-ligne.",
+      "factId": "f_skilling"
+    },
+    {
+      "id": "tf_12",
+      "statement": "Google for Startups Accelerator Africa a accompagné plus de 180 startups depuis 2018.",
+      "answer": true,
+      "explanation": "350 M$ levés et 3 700 emplois créés.",
+      "factId": "f_accel"
+    },
+    {
+      "id": "tf_13",
+      "statement": "Les startups africaines ont levé 3,2 milliards de dollars en 2025.",
+      "answer": true,
+      "explanation": "Soit 40 % de plus qu'en 2024.",
+      "factId": "f_funding"
+    }
+  ],
+  "memory": [
+    {
+      "id": "m_01",
+      "term": "M-Pesa",
+      "match": "Safaricom",
+      "factId": "f_mpesa"
+    },
+    {
+      "id": "m_02",
+      "term": "Wave",
+      "match": "Sénégal",
+      "factId": "f_wave"
+    },
+    {
+      "id": "m_03",
+      "term": "Zindi",
+      "match": "Data science",
+      "factId": "f_zindi"
+    },
+    {
+      "id": "m_04",
+      "term": "ALX",
+      "match": "Compétences tech",
+      "factId": "f_alx"
+    },
+    {
+      "id": "m_05",
+      "term": "Sèmè City",
+      "match": "Bénin",
+      "factId": "f_seme"
+    },
+    {
+      "id": "m_06",
+      "term": "2Africa",
+      "match": "Câble sous-marin",
+      "factId": "f_2africa"
+    },
+    {
+      "id": "m_07",
+      "term": "Skilling Africa",
+      "match": "Google",
+      "factId": "f_skilling"
+    },
+    {
+      "id": "m_08",
+      "term": "GSMA",
+      "match": "Mobile money",
+      "factId": "f_gsma_11"
+    }
+  ]
+}

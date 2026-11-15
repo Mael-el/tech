@@ -1,0 +1,252 @@
+{
+  "verifiedAt": "2026-11-15",
+  "note": "Chiffres publics collectés le 15 novembre 2026 à partir des sources citées (UIT, GSMA, Banque mondiale, Safaricom, DataReportal, Meta, ALX, Zindi, Google, Africa: The Big Deal, portail officiel du Bénin). Chaque fiche renvoie à sa source ; les liens s'ouvrent dans un nouvel onglet.",
+  "themes": [
+    { "id": "connectivite", "label": "Connectivité", "color": "#0284C7", "icon": "globe" },
+    { "id": "mobile-money", "label": "Mobile money", "color": "#059669", "icon": "phone" },
+    { "id": "education", "label": "Formation", "color": "#7C3AED", "icon": "book" },
+    { "id": "financement", "label": "Financement", "color": "#EA580C", "icon": "sparkles" },
+    { "id": "benin", "label": "Bénin", "color": "#D97706", "icon": "pin" },
+    { "id": "google", "label": "Google", "color": "#1D4ED8", "icon": "target" }
+  ],
+  "facts": [
+    {
+      "id": "f_itu_38",
+      "theme": "connectivite",
+      "stat": "38 %",
+      "title": "des Africains utilisaient Internet en 2024",
+      "detail": "L'Afrique reste la région la moins connectée : 38 % de la population en ligne, contre 68 % dans le monde. L'écart ville/campagne est le plus large du monde : 57 % en zone urbaine, 23 % en zone rurale.",
+      "source": {
+        "name": "UIT — Measuring Digital Development: Facts and Figures 2024",
+        "url": "https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/",
+        "date": "2024"
+      }
+    },
+    {
+      "id": "f_itu_5g",
+      "theme": "connectivite",
+      "stat": "11 %",
+      "title": "de la population africaine est couverte par la 5G",
+      "detail": "70 % des Africains sont couverts par la 4G et 16 % dépendent encore de la 3G. 14 % n'ont aucune couverture mobile large bande, et jusqu'à 25 % en zone rurale.",
+      "source": {
+        "name": "UIT — State of Digital Development in Africa 2025",
+        "url": "https://www.itu.int/itu-d/reports/statistics/",
+        "date": "2025"
+      }
+    },
+    {
+      "id": "f_gsma_11",
+      "theme": "mobile-money",
+      "stat": "1 100 Md$",
+      "title": "de transactions mobile money en Afrique subsaharienne (2024)",
+      "detail": "La région compte environ 1,1 milliard de comptes enregistrés, dont 283 millions actifs sur 30 jours, pour 80 milliards de transactions. Elle concentre près des deux tiers de la valeur mondiale du mobile money.",
+      "source": {
+        "name": "GSMA — State of the Industry Report on Mobile Money 2025",
+        "url": "https://www.gsma.com/sotir/",
+        "date": "2025"
+      }
+    },
+    {
+      "id": "f_mpesa",
+      "theme": "mobile-money",
+      "stat": "35,8 M",
+      "title": "de clients M-Pesa actifs au Kenya (mars 2025)",
+      "detail": "Sur l'exercice clos en mars 2025, M-Pesa a traité 38 290 milliards de shillings kényans (≈ 296 Md$) via 37,15 milliards de transactions, avec un réseau de 298 890 agents. M-Pesa pèse 44,2 % du chiffre d'affaires des services de Safaricom au Kenya.",
+      "source": {
+        "name": "Safaricom — Annual Report 2025",
+        "url": "https://www.safaricom.co.ke/annualreport_2025/",
+        "date": "2025"
+      }
+    },
+    {
+      "id": "f_wave",
+      "theme": "mobile-money",
+      "stat": "1,7 Md$",
+      "title": "valorisation de Wave après sa levée de 200 M$ (2021)",
+      "detail": "Fondée en 2018 au Sénégal, Wave est devenue la première licorne d'Afrique francophone. Elle opère au Sénégal, en Côte d'Ivoire, au Mali, au Burkina Faso et en Gambie, avec un modèle de frais réduits.",
+      "source": {
+        "name": "Le Monde — Wave, la tornade bleue du paiement mobile",
+        "url": "https://www.lemonde.fr/afrique/article/2021/11/09/wave-la-tornade-bleue-qui-s-impose-dans-le-paiement-mobile-en-afrique-de-l-ouest_6101539_3212.html",
+        "date": "2021"
+      }
+    },
+    {
+      "id": "f_findex",
+      "theme": "mobile-money",
+      "stat": "33 %",
+      "title": "des adultes d'Afrique subsaharienne avaient un compte mobile money en 2021",
+      "detail": "C'est la mesure de référence de la Banque mondiale sur l'inclusion financière (Global Findex). Le mobile money reste le principal point d'entrée vers les services financiers formels pour des millions d'adultes.",
+      "source": {
+        "name": "Banque mondiale — Global Findex Database 2021",
+        "url": "https://www.worldbank.org/en/publication/globalfindex",
+        "date": "2021"
+      }
+    },
+    {
+      "id": "f_benin_net",
+      "theme": "benin",
+      "stat": "4,80 M",
+      "title": "d'internautes au Bénin fin 2025",
+      "detail": "Soit 32,2 % des 14,9 millions d'habitants. Le pays compte 16,4 millions de connexions mobiles (110 % de la population, plusieurs SIM par personne) et l'âge médian y est de 18 ans.",
+      "source": {
+        "name": "DataReportal — Digital 2026: Benin",
+        "url": "https://datareportal.com/reports/digital-2026-benin",
+        "date": "2025"
+      }
+    },
+    {
+      "id": "f_seme",
+      "theme": "benin",
+      "stat": "2017",
+      "title": "lancement de Sèmè City, la cité béninoise de l'innovation",
+      "detail": "La Cité internationale de l'innovation et du savoir s'inscrit dans le programme « Bénin Révélé ». Son premier campus, Sèmè-One, a ouvert à Cotonou en 2020. La communauté revendique 650 apprenants, 1 000 entrepreneurs et 115 chercheurs.",
+      "source": {
+        "name": "Portail officiel du Bénin — Innovation et capital humain",
+        "url": "https://benin.bj/secteurs/innovation-et-capital-humain",
+        "date": "2026"
+      }
+    },
+    {
+      "id": "f_2africa",
+      "theme": "benin",
+      "stat": "45 000 km",
+      "title": "de câble sous-marin pour 2Africa",
+      "detail": "Porté par Meta et un consortium d'opérateurs, 2Africa relie 33 pays d'Afrique, d'Europe et d'Asie et atterrit au Bénin. C'est le plus long système de câble sous-marin au monde.",
+      "source": {
+        "name": "Meta / APO — extension de 2Africa au Golfe, à l'Inde et au Pakistan",
+        "url": "https://www.africa-newsroom.com/press/2africa-extended-to-the-arabian-gulf-pakistan-and-india?lang=fr",
+        "date": "2021"
+      }
+    },
+    {
+      "id": "f_alx",
+      "theme": "education",
+      "stat": "347 100",
+      "title": "diplômés revendiqués par ALX",
+      "detail": "ALX met en avant 347 100 diplômés, 257 900 jeunes en emploi, 43 400 entrepreneurs soutenus et 60 100 emplois créés via l'entrepreneuriat. Un partenariat avec la Mastercard Foundation ouvre l'accès aux programmes à 5 $ par mois.",
+      "source": {
+        "name": "ALX Africa — site officiel",
+        "url": "https://www.alxafrica.com/",
+        "date": "2026"
+      }
+    },
+    {
+      "id": "f_zindi",
+      "theme": "education",
+      "stat": "1 sur 5",
+      "title": "utilisateurs de Zindi dit avoir trouvé un emploi data/IA grâce à son profil",
+      "detail": "Lancée en 2018 au Cap, Zindi organise des compétitions de machine learning sur des problèmes africains (santé, agriculture, climat). Sa communauté s'étend sur plus de 185 pays et 1 membre sur 5 déclare y avoir gagné un emploi en data/IA.",
+      "source": {
+        "name": "Zindi — About us",
+        "url": "https://zindi.world/about",
+        "date": "2026"
+      }
+    },
+    {
+      "id": "f_skilling",
+      "theme": "google",
+      "stat": "3 millions",
+      "title": "de personnes visées par Skilling Africa with Google d'ici 2030",
+      "detail": "Lancé le 2 novembre 2026, le hub gratuit regroupe plus de 15 programmes Google (Google Career Certificates, Hustle Academy, Google Cloud Skills) dans des leçons téléchargeables en Wi-Fi puis consultables hors-ligne, avec SCOUT comme assistant d'étude. Google revendique plus de 7 millions de jeunes Africains déjà formés.",
+      "source": {
+        "name": "Google Africa blog — Unlocking Africa's AI potential (2 novembre 2026)",
+        "url": "https://blog.google/intl/en-africa/unlocking-africas-ai-potential-introducing-skilling-africa-with-google/",
+        "date": "2026"
+      }
+    },
+    {
+      "id": "f_accel",
+      "theme": "google",
+      "stat": "180+",
+      "title": "startups accompagnées par Google for Startups Accelerator Africa",
+      "detail": "Depuis 2018, le programme a soutenu plus de 180 startups issues de 17 pays. Elles ont levé ensemble 350 M$ et créé 3 700 emplois. La 10e cohorte (2026) est « AI-first » et donne accès à des TPU et jusqu'à 350 000 $ de crédits Google Cloud.",
+      "source": {
+        "name": "Google Africa blog — Class 10 du Google for Startups Accelerator Africa",
+        "url": "https://blog.google/intl/en-africa/company-news/outreach-and-initiatives/ai-first-founders-apply-now-for-the-10th-cohort-of-google-for-startups-accelerator-africa/",
+        "date": "2026"
+      }
+    },
+    {
+      "id": "f_funding",
+      "theme": "financement",
+      "stat": "3,2 Md$",
+      "title": "levés par les startups africaines en 2025",
+      "detail": "C'est 40 % de plus qu'en 2024. 69 startups ont levé plus de 10 M$ (contre 40 en 2024). Le Kenya, l'Égypte, l'Afrique du Sud et le Nigeria concentrent 82 % du total, soit près de 20 Md$ cumulés depuis 2019.",
+      "source": {
+        "name": "Africa: The Big Deal — bilan 2025 (repris par Connecting Africa)",
+        "url": "https://www.connectingafrica.com/investment/african-startups-raised-3-2b-in-2025-40-more-than-in-2024",
+        "date": "2026"
+      }
+    },
+    {
+      "id": "f_ia",
+      "theme": "financement",
+      "stat": "90 %",
+      "title": "des entreprises africaines signalent un manque de profils IA",
+      "detail": "Google évalue à 2 900 Md$ l'opportunité économique liée à l'IA sur le continent, tout en constatant que plus de 90 % des entreprises de la région peinent à recruter des profils IA opérationnels.",
+      "source": {
+        "name": "Google Africa blog — Skilling Africa with Google",
+        "url": "https://blog.google/intl/en-africa/unlocking-africas-ai-potential-introducing-skilling-africa-with-google/",
+        "date": "2026"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "id": "r_skilling",
+      "name": "Skilling Africa with Google",
+      "url": "https://skillingafrica.withgoogle.com/",
+      "kind": "Gratuit · hors-ligne",
+      "description": "Plus de 15 programmes Google (IA, data, cybersécurité, cloud) en leçons courtes téléchargeables, avec l'assistant SCOUT. Lancé le 2 novembre 2026."
+    },
+    {
+      "id": "r_certificates",
+      "name": "Google Career Certificates",
+      "url": "https://grow.google/certificates/",
+      "kind": "Certificat",
+      "description": "Certificats professionnels en support IT, analyse de données, cybersécurité et gestion de projet, orientés employabilité."
+    },
+    {
+      "id": "r_alx",
+      "name": "ALX Africa",
+      "url": "https://www.alxafrica.com/",
+      "kind": "Parcours tech",
+      "description": "Parcours AI & Data, Creative et Entrepreneuriat ; accès sponsorisé via la Mastercard Foundation (5 $/mois pour les apprenants éligibles)."
+    },
+    {
+      "id": "r_zindi",
+      "name": "Zindi",
+      "url": "https://zindi.world/",
+      "kind": "Compétitions · emplois",
+      "description": "Compétitions de data science sur des problèmes africains, cours, offres d'emploi et hackathons universitaires UmojaHack."
+    },
+    {
+      "id": "r_benin",
+      "name": "Sèmè City (Bénin)",
+      "url": "https://benin.bj/secteurs/innovation-et-capital-humain",
+      "kind": "Hub d'innovation",
+      "description": "Campus Sèmè-One à Cotonou, programmes de formation, incubation et laboratoires (X-TechLab, Film Lab) ouverts aux jeunes Béninois."
+    },
+    {
+      "id": "r_freecodecamp",
+      "name": "freeCodeCamp",
+      "url": "https://www.freecodecamp.org/",
+      "kind": "Gratuit",
+      "description": "Curriculum complet de développement web, data et machine learning, avec certifications gratuites et projets pratiques."
+    },
+    {
+      "id": "r_kaggle",
+      "name": "Kaggle Learn",
+      "url": "https://www.kaggle.com/learn",
+      "kind": "Gratuit",
+      "description": "Micro-cours pratiques (Python, pandas, ML, SQL) et compétitions de data science accessibles sans frais."
+    },
+    {
+      "id": "r_novojob",
+      "name": "Novojob",
+      "url": "https://www.novojob.com/benin/",
+      "kind": "Offres d'emploi",
+      "description": "Plateforme d'offres d'emploi au Bénin, en Côte d'Ivoire, au Sénégal et au Togo : le vrai marché, pas les offres de démonstration de cette app."
+    }
+  ]
+}
