@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, type IconName } from './components/Icon'
 import { Avatar, Sheet, Toasts } from './components/ui'
 import { CommandPalette } from './components/CommandPalette'
-import { useApp } from './store'
+import { arcadePlayedToday, useApp } from './store'
+import { ACHIEVEMENTS } from './lib/arcade'
 import { useRoute, type Tab } from './lib/router'
 import { LoginScreen } from './screens/Login'
 import { DashboardScreen } from './screens/Dashboard'
@@ -11,6 +12,8 @@ import { FlashcardsScreen } from './screens/Flashcards'
 import { CertificatesScreen } from './screens/Certificates'
 import { NetworkScreen } from './screens/Network'
 import { ProfileScreen } from './screens/Profile'
+import { ArcadeScreen } from './screens/Arcade'
+import { FactsScreen } from './screens/Facts'
 
 const TABS: { id: Tab; label: string; icon: IconName; path: string }[] = [
   { id: 'home', label: 'Accueil', icon: 'home', path: '#/' },
@@ -131,11 +134,28 @@ function OfflineBanner() {
 /* ------------------------------- App -------------------------------- */
 
 export default function App() {
-  const { state, dispatch } = useApp()
+  const { state, dispatch, notify } = useApp()
   const [route, navigate] = useRoute()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [live, setLive] = useState<{ title: string; instructor: string } | null>(null)
   const contentRef = useRef<HTMLElement | null>(null)
+  const seenAchievements = useRef<string[]>(state.arcade.achievements)
+
+  useEffect(() => {
+    const unlocked = state.arcade.achievements
+    const fresh = unlocked.filter((id) => !seenAchievements.current.includes(id))
+    seenAchievements.current = unlocked
+    if (fresh.length === 0) return
+    const titles = fresh
+      .map((id) => ACHIEVEMENTS.find((item) => item.id === id)?.title)
+      .filter(Boolean)
+      .join(', ')
+    notify(
+      fresh.length === 1
+        ? `Succès débloqué : ${titles} (+25 XP)`
+        : `${fresh.length} succès débloqués : ${titles} (+${fresh.length * 25} XP)`,
+    )
+  }, [state.arcade.achievements, notify])
 
   const account = state.account
   const immersive = route.tab === 'courses' && Boolean(route.lessonId)
@@ -179,6 +199,10 @@ export default function App() {
         return <NetworkScreen />
       case 'profile':
         return <ProfileScreen onBack={() => navigate('#/')} onNavigate={navigate} />
+      case 'arcade':
+        return <ArcadeScreen onNavigate={navigate} />
+      case 'facts':
+        return <FactsScreen factId={route.factId} onNavigate={navigate} />
       default:
         return null
     }
@@ -221,6 +245,20 @@ export default function App() {
               <div className="topbar-actions">
                 <button
                   type="button"
+                  className="icon-btn arcade-btn"
+                  aria-label="Salle d’arcade"
+                  onClick={() => {
+                    navigate('#/arcade')
+                    window.dispatchEvent(new Event('arcade:reset'))
+                  }}
+                >
+                  <Icon name="gamepad" size={18} />
+                  {(['quiz', 'vf', 'memory'] as const).some((game) => !arcadePlayedToday(state, game)) && (
+                    <span className="arcade-dot" />
+                  )}
+                </button>
+                <button
+                  type="button"
                   className="icon-btn search-btn"
                   aria-label="Rechercher (Ctrl K)"
                   onClick={() => setPaletteOpen(true)}
@@ -243,6 +281,7 @@ export default function App() {
           )}
 
           <main ref={contentRef} className={`content ${immersive ? 'immersive' : ''}`}>{content}</main>
+
 
           {showChrome && (
             <nav className="bottomnav" aria-label="Navigation principale">

@@ -166,6 +166,20 @@ export function ProfileScreen({ onBack, onNavigate }: { onBack: () => void; onNa
         <div className="stat"><span className="stat-icon" style={{ color: '#059669' }}><Icon name="award" size={18} /></span><strong>{paidCount}/{seed.attestations.length}</strong><span>attestations</span></div>
       </div>
 
+      <Card className="profile-arcade" onClick={() => onNavigate('#/arcade')}>
+        <span className="arcade-cta-icon"><Icon name="gamepad" size={20} /></span>
+        <div className="profile-arcade-copy">
+          <strong>Salle d&apos;arcade</strong>
+          <small>
+            {state.arcade.achievements.length}/7 succès · Records : quiz{' '}
+            {state.arcade.best.quiz ? `${state.arcade.best.quiz}/10` : '—'} · vrai-faux{' '}
+            {state.arcade.best.vf ? `${state.arcade.best.vf}/8` : '—'} · mémoire{' '}
+            {state.arcade.best.memoryMoves ? `${state.arcade.best.memoryMoves} coups` : '—'}
+          </small>
+        </div>
+        <Icon name="next" size={16} />
+      </Card>
+
       {editing ? (
         <Card className="form">
           <label className="field">

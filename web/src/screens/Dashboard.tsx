@@ -14,6 +14,7 @@ import {
 } from '../store'
 import { activityWindow, accuracy } from '../lib/progress'
 import { isDue } from '../lib/sm2'
+import { factOfTheDay, themeById } from '../lib/facts'
 
 function GoalRing({ value, goal }: { value: number; goal: number }) {
   const radius = 27
@@ -99,6 +100,8 @@ export function DashboardScreen({
     },
   ]
 
+  const dailyFact = factOfTheDay()
+  const factTheme = themeById(dailyFact.theme)
   const firstName = account.name.split(' ')[0]
 
   return (
@@ -172,6 +175,35 @@ export function DashboardScreen({
           </button>
         ))}
       </div>
+
+      <Card
+        className="daily-fact"
+        onClick={() => onNavigate(`#/infos/${dailyFact.id}`)}
+        style={{ borderLeftColor: factTheme.color }}
+      >
+        <span className="eyebrow" style={{ color: factTheme.color }}>
+          <Icon name="bulb" size={13} /> Le saviez-vous · chiffre vérifié
+        </span>
+        <div className="daily-fact-body">
+          <strong style={{ color: factTheme.color }}>{dailyFact.stat}</strong>
+          <div>
+            <h3>{dailyFact.title}</h3>
+            <p className="muted small">{dailyFact.source.name.split('—')[0].trim()} · {dailyFact.source.date}</p>
+          </div>
+        </div>
+        <span className="daily-fact-cta">
+          Voir la fiche et la source <Icon name="next" size={13} />
+        </span>
+      </Card>
+
+      <button type="button" className="arcade-cta-card" onClick={() => onNavigate('#/arcade')}>
+        <span className="arcade-cta-icon"><Icon name="gamepad" size={20} /></span>
+        <span className="arcade-cta-copy">
+          <strong>Salle d&apos;arcade</strong>
+          <small>Défi éclair · Vrai ou faux · Mémoire tech — des chiffres réels</small>
+        </span>
+        <Icon name="next" size={16} />
+      </button>
 
       <div className="stats-grid">
         <Stat icon="sparkles" value={state.points.toLocaleString('fr-FR')} label="points" tone="#C2410C" />

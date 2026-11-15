@@ -18,6 +18,8 @@ badges et attestations, emplois et incubateur de projets, communautés par domai
 | Réseau | Offres d'emploi et candidatures, kanban de projets incubés, salons communautaires par domaine |
 | Expérience | Thème clair/sombre, profil éditable, session live FATA, fonctionnement hors-ligne |
 | Progression | Série de jours, objectif quotidien, précision aux quiz, carte de chaleur d'activité, plan du jour |
+| Vrai & vérifié | 15 chiffres réels sourcés (UIT, GSMA, Banque mondiale, Google…), 8 ressources gratuites, sources cliquables |
+| Salle d'arcade | Défi éclair, Vrai ou faux, Mémoire tech : XP, combos, records, confettis, 7 succès |
 
 ## Aperçu web
 
@@ -29,7 +31,7 @@ SDK Android, dépôts Maven inaccessibles et wrapper Gradle non versionné. Un a
 cd web
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 23 tests unitaires (SM-2, séries, badges, routage, recherche)
+npm test         # 41 tests unitaires (SM-2, séries, badges, routage, recherche, chiffres, arcade)
 npm run build    # build de production + service worker hors-ligne
 ```
 
@@ -38,6 +40,10 @@ npm run build    # build de production + service worker hors-ligne
 L'aperçu a été poussé au-delà du simple rendu : routage par URL (`#/cours/:id/:leçon`), palette de
 commande `Ctrl+K`, notes de leçon persistées, révision SM-2 avec deep links, recherche insensible aux
 accents, export/import JSON de la progression, impression d'attestation A4 et PWA hors-ligne.
+
+Il ajoute aussi une couche de **contenu réel et sourcé** (« Vrai & vérifié » : 15 chiffres publics,
+sources UIT/GSMA/Banque mondiale/Google…) et une **salle d'arcade** (Défi éclair, Vrai ou faux,
+Mémoire tech) qui transforme ces chiffres en jeu, avec XP, combos, records et succès.
 
 Les données proviennent du code Kotlin (`web/src/data/seed.json`, généré par
 `tools/extract_seed.py`). Paiements, attestations et session live y sont **simulés**, comme dans

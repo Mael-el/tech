@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from './Icon'
 import { courseById, domainById, seed, useApp } from '../store'
-import { buildIndex, searchEntries, type SearchEntry } from '../lib/search'
+import { buildIndex, normalize, searchEntries, type SearchEntry } from '../lib/search'
+import { facts, themeById } from '../lib/facts'
 
 const KIND_ICON: Record<string, React.ComponentProps<typeof Icon>['name']> = {
   cours: 'book',
@@ -9,6 +10,8 @@ const KIND_ICON: Record<string, React.ComponentProps<typeof Icon>['name']> = {
   carte: 'cards',
   emploi: 'briefcase',
   projet: 'kanban',
+  fait: 'bulb',
+  page: 'gamepad',
 }
 
 export function CommandPalette({
@@ -25,36 +28,67 @@ export function CommandPalette({
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const index = useMemo(
-    () =>
-      buildIndex(
-        seed.courses,
-        seed.lessons,
-        [...seed.flashcards, ...state.customCards],
-        seed.jobs,
-        seed.projects,
-        (id) => courseById(id)?.title ?? '',
-        (id) => domainById(id).label,
-      ),
-    [state.customCards],
+  const pages = useMemo<SearchEntry[]>(
+    () => [
+      {
+        id: 'page-arcade',
+        kind: 'page',
+        title: 'Salle d’arcade',
+        subtitle: 'Défi éclair · Vrai ou faux · Mémoire tech',
+        path: '#/arcade',
+        haystack: normalize('arcade jeux défis quiz mémoire vrai faux jouer'),
+      },
+      {
+        id: 'page-facts',
+        kind: 'page',
+        title: 'Vrai & vérifié — chiffres sourcés',
+        subtitle: 'Chiffres réels sur l’Afrique numérique, sources citées',
+        path: '#/infos',
+        haystack: normalize('chiffres réels sources vérifié infos statistiques afrique'),
+      },
+    ],
+    [],
   )
+
+  const index = useMemo(() => {
+    const base = buildIndex(
+      seed.courses,
+      seed.lessons,
+      [...seed.flashcards, ...state.customCards],
+      seed.jobs,
+      seed.projects,
+      (id) => courseById(id)?.title ?? '',
+      (id) => domainById(id).label,
+    )
+    const factEntries: SearchEntry[] = facts.map((fact) => ({
+      id: fact.id,
+      kind: 'fait',
+      title: `${fact.stat} — ${fact.title}`,
+      subtitle: `${themeById(fact.theme).label} · ${fact.source.name}`,
+      path: `#/infos/${fact.id}`,
+      haystack: normalize(`${fact.stat} ${fact.title} ${fact.detail} ${fact.source.name}`),
+    }))
+    return [...base, ...factEntries, ...pages]
+  }, [state.customCards, pages])
 
   const results = useMemo(() => searchEntries(index, query, 9), [index, query])
 
   const suggestions = useMemo<SearchEntry[]>(
-    () =>
-      seed.courses
+    () => [
+      ...pages,
+      ...seed.courses
         .filter((c) => state.enrolled.includes(c.id))
-        .slice(0, 5)
+        .slice(0, 4)
         .map((c) => ({
           id: c.id,
-          kind: 'cours',
+          kind: 'cours' as const,
           title: c.title,
           subtitle: `Reprendre · ${domainById(c.domainId).label}`,
           path: `#/cours/${c.id}`,
           haystack: '',
         })),
-    [state.enrolled],
+    ],
+    [state.enrolled, pages],
   )
 
   const items = query ? results : suggestions
@@ -104,14 +138,14 @@ export function CommandPalette({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Rechercher un cours, une leçon, une carte, un emploi…"
+            placeholder="Cours, leçon, carte, chiffre vérifié, jeu…"
             aria-label="Rechercher"
           />
           <kbd>esc</kbd>
         </div>
 
         <div className="palette-list">
-          {!query && <p className="palette-hint">Reprendre l'apprentissage</p>}
+          {!query && <p className="palette-hint">Jouer, vérifier, reprendre</p>}
           {items.map((entry, i) => (
             <button
               key={`${entry.kind}-${entry.id}`}

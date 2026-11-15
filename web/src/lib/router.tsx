@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type Tab = 'home' | 'courses' | 'cards' | 'badges' | 'network' | 'profile'
+export type Tab = 'home' | 'courses' | 'cards' | 'badges' | 'network' | 'profile' | 'arcade' | 'facts'
 
 export interface Route {
   tab: Tab
   courseId?: string
   lessonId?: string
   cardId?: string
+  factId?: string
 }
 
 const SEGMENTS: Record<Tab, string> = {
@@ -16,6 +17,8 @@ const SEGMENTS: Record<Tab, string> = {
   badges: 'certifications',
   network: 'reseau',
   profile: 'profil',
+  arcade: 'arcade',
+  facts: 'infos',
 }
 
 const ALIASES: Record<string, Tab> = {
@@ -32,6 +35,15 @@ const ALIASES: Record<string, Tab> = {
   network: 'network',
   profil: 'profile',
   profile: 'profile',
+  arcade: 'arcade',
+  jeux: 'arcade',
+  defis: 'arcade',
+  défis: 'arcade',
+  salle: 'arcade',
+  infos: 'facts',
+  vrai: 'facts',
+  chiffres: 'facts',
+  facts: 'facts',
 }
 
 export function parseHash(hash: string): Route {
@@ -45,6 +57,9 @@ export function parseHash(hash: string): Route {
   if (tab === 'cards') {
     return { tab, cardId: parts[1] }
   }
+  if (tab === 'facts') {
+    return { tab, factId: parts[1] }
+  }
   return { tab }
 }
 
@@ -56,6 +71,7 @@ export function routePath(route: Route): string {
     if (route.lessonId) parts.push(route.lessonId)
   }
   if (route.tab === 'cards' && route.cardId) parts.push(route.cardId)
+  if (route.tab === 'facts' && route.factId) parts.push(route.factId)
   return `#/${parts.filter(Boolean).join('/')}`
 }
 

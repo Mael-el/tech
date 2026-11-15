@@ -6,6 +6,7 @@ export type IconName =
   | 'kanban' | 'chat' | 'send' | 'user' | 'logout' | 'lock' | 'mail' | 'phone'
   | 'pin' | 'sparkles' | 'clock' | 'star' | 'shield' | 'download' | 'refresh'
   | 'chevron' | 'menu' | 'target' | 'users' | 'code' | 'live'
+  | 'gamepad' | 'trophy' | 'bulb' | 'bolt' | 'info' | 'external'
 
 const paths: Record<IconName, React.ReactNode> = {
   home: <><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M9.5 21v-6h5v6" /></>,
@@ -44,6 +45,12 @@ const paths: Record<IconName, React.ReactNode> = {
   users: <><circle cx="9" cy="8" r="3.6" /><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0" /><path d="M16.5 5.2a3.5 3.5 0 0 1 0 6.6" /><path d="M17.8 14.4a6 6 0 0 1 3.4 5.6" /></>,
   code: <><path d="m8.5 8-4.5 4 4.5 4" /><path d="m15.5 8 4.5 4-4.5 4" /><path d="m13.5 5-3 14" /></>,
   live: <><circle cx="12" cy="12" r="2.6" /><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4" /><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2" /></>,
+  gamepad: <><path d="M7.5 8h9a5 5 0 0 1 4.8 6.4l-.6 2.1a2.6 2.6 0 0 1-4.4 1L14.8 16H9.2l-1.5 1.5a2.6 2.6 0 0 1-4.4-1l-.6-2.1A5 5 0 0 1 7.5 8Z" /><path d="M8 12.5h3M9.5 11v3" /><circle cx="15.5" cy="12" r=".9" /><circle cx="17.5" cy="14" r=".9" /></>,
+  trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" /><path d="M8 5H5.5a2.5 2.5 0 0 0 0 5H8M16 5h2.5a2.5 2.5 0 0 1 0 5H16" /><path d="M12 13v3M9 20h6M10 16h4l.8 4H9.2L10 16Z" /></>,
+  bulb: <><path d="M9 17a6 6 0 1 1 6 0v2H9v-2Z" /><path d="M9.5 21h5" /><path d="M12 5.5a3.5 3.5 0 0 0-2 6.4" /></>,
+  bolt: <path d="M13.5 2 5 13.5h5.5L10 22l8.5-11.5H13L13.5 2Z" />,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5.5" /><circle cx="12" cy="7.8" r=".9" /></>,
+  external: <><path d="M14 4h6v6" /><path d="M20 4 11 13" /><path d="M18 14.5V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V7.5A1.5 1.5 0 0 1 5 6h4.5" /></>,
 }
 
 export function Icon({ name, size = 22, filled = false }: { name: IconName; size?: number; filled?: boolean }) {

@@ -1,6 +1,6 @@
 import type { Course, Flashcard, Job, Lesson, Project } from '../types'
 
-export type SearchKind = 'cours' | 'leçon' | 'carte' | 'emploi' | 'projet'
+export type SearchKind = 'cours' | 'leçon' | 'carte' | 'emploi' | 'projet' | 'fait' | 'page'
 
 export interface SearchEntry {
   id: string

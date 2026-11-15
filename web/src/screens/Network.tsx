@@ -72,6 +72,11 @@ export function NetworkScreen() {
               <p>Votre badge {state.badges.b_argent ? 'Argent' : 'Bronze'} et vos {seed.profile.completedCoursesCount + state.extraCourses} cours validés sont joints à chaque candidature.</p>
             </div>
           </Card>
+          <p className="demo-note">
+            <Icon name="info" size={13} />
+            Offres d'exemple : les entreprises sont citées à titre illustratif et aucune candidature
+            n'est transmise. Le vrai marché est sur <strong>novojob.com</strong>.
+          </p>
           {seed.jobs.map((job) => {
             const applied = state.appliedJobs.includes(job.id)
             const d = domainById(job.domainId)
@@ -94,7 +99,7 @@ export function NetworkScreen() {
                 <p className="muted small">{job.description}</p>
                 <p className="requirements"><Icon name="shield" size={13} /> {job.requirements}</p>
                 {applied ? (
-                  <p className="applied"><Icon name="check" size={14} /> Candidature envoyée</p>
+                  <p className="applied"><Icon name="check" size={14} /> Candidature simulée (démo)</p>
                 ) : (
                   <Btn
                     variant="soft"
@@ -102,7 +107,7 @@ export function NetworkScreen() {
                     icon="send"
                     onClick={() => {
                       dispatch({ type: 'APPLY', jobId: job.id })
-                      notify(`Candidature envoyée à ${job.companyName}.`)
+                      notify(`Candidature simulée chez ${job.companyName} : rien n'a été envoyé.`)
                     }}
                   >
                     Postuler avec mon profil

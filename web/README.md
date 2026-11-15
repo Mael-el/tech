@@ -51,6 +51,38 @@ Ou « Créer un compte » : le compte reste local au navigateur (mot de passe ha
 | PWA hors-ligne | `manifest.webmanifest`, icônes 192/512, service worker « stale-while-revalidate », bannière hors-ligne |
 | Accessibilité | Contrastes, focus visibles, `aria-label`, navigation clavier des feuilles (`Échap`) |
 
+### Des chiffres réels, sourcés (« Vrai & vérifié »)
+
+Onglet accessible par la palette (`Ctrl+K` → « Vrai ») ou la fiche du jour de l'accueil : **15 chiffres
+publics sur l'Afrique numérique**, chacun avec sa source cliquable et sa date de vérification
+(15/11/2026) — UIT, GSMA, Banque mondiale (Findex), Safaricom, DataReportal, Meta, ALX, Zindi, Google,
+Africa: The Big Deal, portail officiel du Bénin.
+
+- Fiches filtrables par thème (connectivité, mobile money, formation, financement, Bénin, Google),
+  marquées comme lues (+5 XP), lien de source copiable.
+- **8 ressources gratuites vérifiées** : Skilling Africa with Google (lancé le 2 novembre 2026, hors-ligne),
+  Google Career Certificates, ALX, Zindi, Sèmè City, freeCodeCamp, Kaggle Learn, Novojob.
+- Un test automatisé vérifie que **chaque fiche a une URL https, une date, un thème connu et un détail
+  non vide**, et que chaque question de quiz pointe vers une fiche existante.
+- Les données de démonstration (cours, offres d'emploi, attestations) sont explicitement signalées comme
+  fictives ; les offres citent des entreprises réelles uniquement à titre d'exemple.
+
+### Salle d'arcade (expérience ludique)
+
+Trois mini-jeux sur les mêmes chiffres, avec XP, combos, records et succès :
+
+| Jeu | Règle | XP |
+|---|---|---|
+| **Défi éclair** | 10 questions, 15 s chacune, série de bonnes réponses, source affichée après chaque réponse | 20 + 6 × bonnes réponses |
+| **Vrai ou faux** | 8 affirmations, 8 s, pièges et explications sourcées | 10 + 2 × bonnes réponses |
+| **Mémoire tech** | 6 paires (entreprise ↔ pays/techno) à retrouver, chrono et compteur de coups | 50 si ≤ 10 coups, sinon 35 |
+
+- XP crédités **une fois par jour et par jeu** ; les parties suivantes restent des entraînements notés.
+- **7 succès** (Premier pas, Semaine solide, Sang-froid, Œil de lynx, Mémoire de fer, Curieux,
+  Explorateur) évalués automatiquement, +25 XP chacun, toast de déblocage groupé.
+- Confettis, barre de temps, combos, records persistés, pastille orange sur l'icône manette quand un
+  défi du jour reste à jouer.
+
 ### Qualité
 
 - TypeScript strict (`tsc --noEmit`), découpage `lib/` (logique pure) ↔ `store.tsx` (état) ↔ `screens/` (UI).
@@ -81,10 +113,14 @@ web/
 │   │   ├── progress.ts        # séries, activité, seuils, précision (testé)
 │   │   ├── router.tsx         # routage par hash + navigation
 │   │   ├── search.ts          # index de recherche accent-insensible (testé)
+│   │   ├── facts.ts           # chiffres vérifiés, sources, ressources (testé)
+│   │   ├── arcade.ts          # tirages quotidiens, scoring, succès (testé)
 │   │   └── format.ts          # FCFA, dates, initiales
 │   ├── data/seed.json         # données extraites du repository Kotlin
+│   ├── data/facts.json        # 15 chiffres réels + 8 ressources + sources
+│   ├── data/arcade.json       # 30 questions, 13 vrai/faux, 8 paires mémoire
 │   ├── components/            # icônes, cartes, feuilles, toasts, palette
-│   └── screens/               # Login, Dashboard, Cours, Révision, Certifs, Réseau, Profil
+│   └── screens/               # Login, Dashboard, Cours, Révision, Certifs, Réseau, Profil, Vrai, Arcade
 └── public/                    # logo, police Plus Jakarta Sans, icônes PWA, service worker
 ```
 

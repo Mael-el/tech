@@ -10,10 +10,18 @@ import {
 } from './lib/progress'
 import { initialMemory, reviewMemory, type CardMemory } from './lib/sm2'
 import { formatFcfa } from './lib/format'
+import {
+  evaluateAchievements,
+  memoryXp,
+  quizXp,
+  vfXp,
+  type GameId,
+} from './lib/arcade'
 
 export const seed = seedJson as unknown as Seed
 
 export type { CardMemory }
+export type { GameId }
 
 /* ------------------------------------------------------------------ */
 /*  Constantes de démonstration (identiques à l'app Android)          */
@@ -38,6 +46,13 @@ export interface QuizStats {
   correct: number
 }
 
+export interface ArcadeState {
+  best: { quiz: number; vf: number; memoryMoves: number }
+  plays: { quiz: string | null; vf: string | null; memory: string | null }
+  achievements: string[]
+  factsRead: string[]
+}
+
 export interface Persist {
   version: number
   account: Account | null
@@ -60,6 +75,7 @@ export interface Persist {
   favorites: { courses: string[]; cards: string[] }
   customCards: Flashcard[]
   quiz: QuizStats
+  arcade: ArcadeState
 }
 
 const today = () =>
@@ -92,6 +108,18 @@ export function initialState(): Persist {
     favorites: { courses: [], cards: [] },
     customCards: [],
     quiz: { attempts: 24, correct: 19 },
+    arcade: { best: { quiz: 0, vf: 0, memoryMoves: 0 }, plays: { quiz: null, vf: null, memory: null }, achievements: [], factsRead: [] },
+  }
+}
+
+function normalizeArcade(value: Partial<ArcadeState> | undefined): ArcadeState {
+  const base = initialState().arcade
+  if (!value) return base
+  return {
+    best: { ...base.best, ...(value.best ?? {}) },
+    plays: { ...base.plays, ...(value.plays ?? {}) },
+    achievements: Array.isArray(value.achievements) ? value.achievements : [],
+    factsRead: Array.isArray(value.factsRead) ? value.factsRead : [],
   }
 }
 
@@ -115,6 +143,7 @@ function migrateV1(raw: string): Persist | null {
       projectStatus: old.projectStatus ?? base.projectStatus,
       messages: old.messages ?? base.messages,
       theme: old.theme ?? 'light',
+      arcade: normalizeArcade(old.arcade),
       version: 2,
     }
   } catch {
@@ -127,7 +156,7 @@ export function loadState(): Persist {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Persist>
-      return { ...initialState(), ...parsed, version: 2 }
+      return { ...initialState(), ...parsed, arcade: normalizeArcade(parsed.arcade), version: 2 }
     }
     const legacy = localStorage.getItem(LEGACY_KEY)
     if (legacy) {
@@ -193,6 +222,28 @@ export function streakOf(state: Persist): number {
   return computeStreak(state.activity)
 }
 
+/** Débloque les succès atteints et crédite 25 XP par nouveau succès. */
+function withAchievements(state: Persist): Persist {
+  const unlocked = evaluateAchievements({
+    completedLessons: state.completedLessons.length,
+    streak: streakOf(state),
+    quizBest: state.arcade.best.quiz,
+    vfBest: state.arcade.best.vf,
+    memoryBestMoves: state.arcade.best.memoryMoves,
+    factsRead: state.arcade.factsRead.length,
+    coursesStarted: Object.values(state.progress).filter((value) => value > 0).length,
+  })
+  const fresh = unlocked.filter((id) => !state.arcade.achievements.includes(id))
+  if (fresh.length === 0) return state
+  const gained = fresh.length * 25
+  return withBadges({
+    ...state,
+    points: state.points + gained,
+    activity: recordXp(state.activity, gained),
+    arcade: { ...state.arcade, achievements: [...state.arcade.achievements, ...fresh] },
+  })
+}
+
 export function todayXp(state: Persist): number {
   return state.activity[dayKey(new Date())] ?? 0
 }
@@ -228,10 +279,12 @@ type Action =
   | { type: 'ADD_CARD'; card: Flashcard }
   | { type: 'DELETE_CARD'; cardId: string }
   | { type: 'SET_GOAL'; goal: number }
+  | { type: 'ARCADE_RESULT'; game: GameId; score: number; moves: number }
+  | { type: 'FACT_READ'; factId: string }
   | { type: 'IMPORT'; state: Persist }
   | { type: 'RESET' }
 
-function reducer(state: Persist, action: Action): Persist {
+function baseReducer(state: Persist, action: Action): Persist {
   switch (action.type) {
     case 'LOGIN':
       return { ...state, account: action.account }
@@ -373,8 +426,47 @@ function reducer(state: Persist, action: Action): Persist {
     case 'SET_GOAL':
       return { ...state, dailyGoal: Math.max(10, Math.min(300, action.goal)) }
 
+    case 'ARCADE_RESULT': {
+      const { game } = action
+      const best = { ...state.arcade.best }
+      if (game === 'memory') {
+        best.memoryMoves = best.memoryMoves === 0 ? action.moves : Math.min(best.memoryMoves, action.moves)
+      } else {
+        best[game] = Math.max(best[game], action.score)
+      }
+      const todayKey = dayKey(new Date())
+      const firstToday = state.arcade.plays[game] !== todayKey
+      const gained = firstToday
+        ? game === 'quiz'
+          ? quizXp(action.score)
+          : game === 'vf'
+            ? vfXp(action.score)
+            : memoryXp(action.moves)
+        : 0
+      return withBadges({
+        ...state,
+        points: state.points + gained,
+        activity: gained ? recordXp(state.activity, gained) : state.activity,
+        arcade: {
+          ...state.arcade,
+          best,
+          plays: firstToday ? { ...state.arcade.plays, [game]: todayKey } : state.arcade.plays,
+        },
+      })
+    }
+
+    case 'FACT_READ': {
+      if (state.arcade.factsRead.includes(action.factId)) return state
+      return withBadges({
+        ...state,
+        points: state.points + 5,
+        activity: recordXp(state.activity, 5),
+        arcade: { ...state.arcade, factsRead: [...state.arcade.factsRead, action.factId] },
+      })
+    }
+
     case 'IMPORT':
-      return { ...action.state, version: 2 }
+      return { ...action.state, arcade: normalizeArcade(action.state.arcade), version: 2 }
 
     case 'RESET': {
       const fresh = initialState()
@@ -384,6 +476,22 @@ function reducer(state: Persist, action: Action): Persist {
     default:
       return state
   }
+}
+
+function reducer(state: Persist, action: Action): Persist {
+  return withAchievements(baseReducer(state, action))
+}
+
+/** XP qu'une partie rapporterait si elle est la première du jour. */
+export function arcadeXpPreview(state: Persist, game: GameId, score: number, moves: number): number {
+  if (state.arcade.plays[game] === dayKey(new Date())) return 0
+  if (game === 'quiz') return quizXp(score)
+  if (game === 'vf') return vfXp(score)
+  return memoryXp(moves)
+}
+
+export function arcadePlayedToday(state: Persist, game: GameId): boolean {
+  return state.arcade.plays[game] === dayKey(new Date())
 }
 
 /* ------------------------------------------------------------------ */
@@ -470,7 +578,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const notify = (message: string, error = false) => {
     const id = Date.now() + Math.random()
-    setToasts((list) => [...list, { id, message, error }])
+    setToasts((list) => [...list, { id, message, error }].slice(-3))
     window.setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 3600)
   }
 
