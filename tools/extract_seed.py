@@ -3,16 +3,16 @@ import json, re, sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 src = (ROOT / 'app/src/main/java/com/example/data/repository/AfricaSkillsRepository.kt').read_text(encoding='utf-8')
 
-def blocks(name):
+def blocks(name, source=None):
     out = []
-    for m in re.finditer(r'\b' + re.escape(name) + r'\(', src):
+    for m in re.finditer(r'\b' + re.escape(name) + r'\(', source if source is not None else src):
         i = m.end()
         depth = 1
         in_str = False
         esc = False
         start = i
-        while i < len(src) and depth > 0:
-            c = src[i]
+        while i < len(source if source is not None else src) and depth > 0:
+            c = (source if source is not None else src)[i]
             if in_str:
                 if esc: esc = False
                 elif c == '\\': esc = True
@@ -22,7 +22,7 @@ def blocks(name):
                 elif c == '(': depth += 1
                 elif c == ')': depth -= 1
             i += 1
-        out.append(src[start:i-1])
+        out.append((source if source is not None else src)[start:i-1])
     return out
 
 def parse(body):
@@ -67,7 +67,8 @@ def parse(body):
 
 profile = parse(blocks('UserProfileEntity')[0])
 courses = [parse(b) for b in blocks('CourseEntity')]
-lessons = [parse(b) for b in blocks('LessonEntity')]
+extra_src = (ROOT / 'app/src/main/java/com/example/data/local/ExtraLessons.kt').read_text(encoding='utf-8')
+lessons = [parse(b) for b in blocks('LessonEntity')] + [parse(b) for b in blocks('LessonEntity', extra_src)]
 cards = [parse(b) for b in blocks('FlashcardEntity')]
 badges = [parse(b) for b in blocks('BadgeEntity')]
 atts = [parse(b) for b in blocks('AttestationEntity')]

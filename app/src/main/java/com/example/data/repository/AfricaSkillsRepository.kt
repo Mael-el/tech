@@ -517,7 +517,7 @@ class AfricaSkillsRepository(private val dao: AfricaSkillsDao) {
         quizExplanation = "Un ratio LTV / CAC >= 3 garantit que chaque client génère suffisamment de marge pour couvrir son acquisition et financer la croissance."
       )
     )
-    dao.insertLessons(lessons)
+    dao.insertLessons(lessons + extraLessons)
 
     val now = System.currentTimeMillis()
     val flashcards = listOf(

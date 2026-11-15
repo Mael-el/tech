@@ -33,6 +33,19 @@ paiement et certificats non vérifiables, données non migrables).
 
 ## 2. Ce que fait l'application
 
+### 2.1 Mise à jour du contenu (15/11/2026)
+
+Les 7 cours qui n'avaient aucune leçon (maths, physique, lecture, ingénierie, robotique, langues locales,
+soft skills) disposent désormais de **2 leçons chacun**, soit 14 leçons rédigées en français avec contenu
+Markdown et une question à choix multiple (+50 XP, explication). Elles sont générées depuis
+`web/src/data/extra-lessons.json` par `tools/gen_extra_lessons.py` vers
+`app/src/main/java/com/example/data/local/ExtraLessons.kt`, puis injectées au seed Room
+(`insertLessons(lessons + extraLessons)`) : **la source de vérité reste le JSON**, le Kotlin est un artefact.
+
+`tools/extract_seed.py` lit les deux fichiers pour produire `web/src/data/seed.json` : **25 leçons,
+14 cours couverts, aucun cours sans leçon**. Il reste à faire côté Android : 2 à 3 quiz par leçon,
+dates de badge calculées à partir des points, et le remplacement du live/chat factices.
+
 ### Navigation
 
 Connexion → `AfricaSkillsApp` avec un `Scaffold` et 5 onglets :
@@ -48,7 +61,7 @@ La navigation n'utilise **pas** Navigation Compose : elle repose sur un état du
 |---|---|---|
 | 14 domaines métier (anglais, dev, data, cyber, IA, design, maths, physique, lecture, ingénierie, robotique, entrepreneuriat, langues locales, soft skills) | `enum class DomainType` + couleurs/labels | Réel (statique) |
 | Catalogue de cours | 14 `CourseEntity` en base | Réel (démo) |
-| Leçons + quiz (1 question, +50 XP) | 11 `LessonEntity` pour **7 cours seulement** | Partiel : **7 cours n'ont aucune leçon** |
+| Leçons + quiz (1 question, +50 XP) | `LessonEntity` : 11 leçons d'origine + 14 ajoutées (`ExtraLessons.kt`) | **25 leçons, 14/14 cours couverts** (cf. §2.1) |
 | Flashcards SM-2 | `processFlashcardReview()` : ease factor ≥ 1.3, intervalles 1/6/interval×EF, répétitions | **Réel** (algorithme correct) |
 | Speed quiz 30 s | Timer `viewModelScope` + score +10 | Réel (local) |
 | Badges 5 tiers (Bronze → Diamant) | Seuils points/cours/niveau d'anglais + déblocage auto | Réel, mais **dates codées en dur** (« 15 Août 2026 », « 19 Septembre 2026 », « 2026 ») |
@@ -206,8 +219,9 @@ C'est la seule voie pour obtenir un APK depuis cet environnement (le runner GitH
 
 7. **`fallbackToDestructiveMigration()` + `exportSchema = false`** : toute évolution de schéma efface les
    données locales (progression, flashcards SM-2, messages) et aucune migration ne peut être testée.
-8. **Contenu incomplet** : 7 des 14 cours n'ont **aucune leçon** ; 1 seul quiz par leçon ; dates de badges
-   codées en dur ; « live » et « chat » factices ; 5 offres d'emploi seulement.
+8. **Contenu incomplet** : ~~7 des 14 cours n'ont aucune leçon~~ → **corrigé** (14 leçons générées, cf. §2.1) ;
+   il reste 1 seul quiz par leçon, des dates de badges codées en dur, un « live » et un « chat » factices,
+   et 5 offres d'emploi seulement.
 9. **Monolithes** : ViewModel 456 lignes / 26 `StateFlow` / 40+ méthodes ; Repository 931 lignes mêlant
    seed de démo et règles métier ; `AppComponents.kt` 1 058 lignes.
 10. **Pas de DI ni de Navigation Compose** : factory manuelle, navigation par état → back stack, deep links
