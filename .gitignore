@@ -16,3 +16,10 @@
 local.properties
 .env
 debug.keystore
+
+# Aperçu web (React/Vite)
+web/node_modules
+web/dist
+web/.vite
+*.log
+web/*.tsbuildinfo
