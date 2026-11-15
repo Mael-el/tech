@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon, type IconName } from './Icon'
 import { initials, useApp } from '../store'
+import { AnimatedValue } from './Motion'
 
 export function Card({
   children,
@@ -14,11 +15,19 @@ export function Card({
   onClick?: () => void
   style?: React.CSSProperties
 }) {
+  const track = (event: React.PointerEvent<HTMLDivElement>) => {
+    const element = event.currentTarget
+    const rect = element.getBoundingClientRect()
+    element.style.setProperty('--mx', `${event.clientX - rect.left}px`)
+    element.style.setProperty('--my', `${event.clientY - rect.top}px`)
+  }
+
   return (
     <div
       className={`card ${onClick ? 'card-tap' : ''} ${className}`}
       style={style}
       onClick={onClick}
+      onPointerMove={track}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={(e) => {
@@ -84,10 +93,34 @@ export function Btn({
   icon?: IconName
   type?: 'button' | 'submit'
 }) {
+  const ref = useRef<HTMLButtonElement | null>(null)
+
+  const spawnRipple = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const element = ref.current
+    if (!element) return
+    const rect = element.getBoundingClientRect()
+    const size = Math.max(rect.width, rect.height) * 1.4
+    const ripple = document.createElement('span')
+    ripple.className = 'btn-ripple'
+    ripple.style.width = `${size}px`
+    ripple.style.height = `${size}px`
+    ripple.style.left = `${event.clientX - rect.left - size / 2}px`
+    ripple.style.top = `${event.clientY - rect.top - size / 2}px`
+    element.appendChild(ripple)
+    window.setTimeout(() => ripple.remove(), 700)
+  }
+
   return (
-    <button type={type} className={`btn btn-${variant} ${full ? 'btn-full' : ''}`} onClick={onClick} disabled={disabled}>
+    <button
+      ref={ref}
+      type={type}
+      className={`btn btn-${variant} ${full ? 'btn-full' : ''}`}
+      onClick={onClick}
+      onPointerDown={spawnRipple}
+      disabled={disabled}
+    >
       {icon && <Icon name={icon} size={17} />}
-      {children}
+      <span className="btn-label">{children}</span>
     </button>
   )
 }
@@ -128,7 +161,9 @@ export function Stat({ icon, value, label, tone }: { icon: IconName; value: stri
       <span className="stat-icon" style={tone ? { color: tone } : undefined}>
         <Icon name={icon} size={18} />
       </span>
-      <strong>{value}</strong>
+      <strong>
+        <AnimatedValue value={value} />
+      </strong>
       <span>{label}</span>
     </div>
   )
@@ -194,8 +229,11 @@ export function Toasts({ bottom = 84 }: { bottom?: number }) {
     <div className="toasts" style={{ bottom }} aria-live="polite">
       {toasts.map((t) => (
         <div key={t.id} className={`toast ${t.error ? 'toast-error' : ''}`} onClick={() => dismissToast(t.id)}>
-          <Icon name={t.error ? 'close' : 'check'} size={16} />
-          <span>{t.message}</span>
+          <span className="toast-icon">
+            <Icon name={t.error ? 'close' : 'check'} size={15} />
+          </span>
+          <span className="toast-message">{t.message}</span>
+          <i className="toast-bar" aria-hidden="true" />
         </div>
       ))}
     </div>

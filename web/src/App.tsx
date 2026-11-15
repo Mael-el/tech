@@ -15,6 +15,8 @@ import { ProfileScreen } from './screens/Profile'
 import { ArcadeScreen } from './screens/Arcade'
 import { FactsScreen } from './screens/Facts'
 import { VerifyScreen } from './screens/Verify'
+import { ConfettiHost, celebrate } from './components/Motion'
+import { useParallax, useScrollReveal } from './lib/motion'
 
 const TABS: { id: Tab; label: string; icon: IconName; path: string }[] = [
   { id: 'home', label: 'Accueil', icon: 'home', path: '#/' },
@@ -62,6 +64,7 @@ function FocusSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
     setRunning(false)
     setFinished(true)
     dispatch({ type: 'FOCUS_DONE' })
+    celebrate('burst')
     const doneToday = state.focus.dates.filter((date) => date === new Date().toISOString().slice(0, 10)).length
     notify(
       doneToday + 1 > FOCUS_DAILY_CAP
@@ -161,6 +164,19 @@ function FocusSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   )
 }
 
+function Aurora() {
+  const { x, y } = useParallax(26)
+  return (
+    <div className="aurora" aria-hidden="true" style={{ '--px': `${x}px`, '--py': `${y}px` } as React.CSSProperties}>
+      <span className="aurora-blob blob-a" />
+      <span className="aurora-blob blob-b" />
+      <span className="aurora-blob blob-c" />
+      <span className="aurora-grid" />
+      <span className="aurora-grain" />
+    </div>
+  )
+}
+
 function OfflineBanner() {
   const [offline, setOffline] = useState(!navigator.onLine)
   useEffect(() => {
@@ -189,6 +205,7 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [focusOpen, setFocusOpen] = useState(false)
   const contentRef = useRef<HTMLElement | null>(null)
+  const [scrollRatio, setScrollRatio] = useState(0)
   const seenAchievements = useRef<string[]>(state.arcade.achievements)
 
   useEffect(() => {
@@ -200,6 +217,7 @@ export default function App() {
       .map((id) => ACHIEVEMENTS.find((item) => item.id === id)?.title)
       .filter(Boolean)
       .join(', ')
+    celebrate('burst')
     notify(
       fresh.length === 1
         ? `Succès débloqué : ${titles} (+25 XP)`
@@ -210,9 +228,32 @@ export default function App() {
   const account = state.account
   const immersive = route.tab === 'courses' && Boolean(route.lessonId)
 
+  const routeKey = [
+    route.tab,
+    route.courseId ?? '',
+    route.lessonId ?? '',
+    route.cardId ?? '',
+    route.factId ?? '',
+    route.code ?? '',
+  ].join(':')
+
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 })
+    setScrollRatio(0)
   }, [route])
+
+  useEffect(() => {
+    const element = contentRef.current
+    if (!element) return
+    const onScroll = () => {
+      const max = element.scrollHeight - element.clientHeight
+      setScrollRatio(max > 0 ? Math.min(1, element.scrollTop / max) : 0)
+    }
+    element.addEventListener('scroll', onScroll, { passive: true })
+    return () => element.removeEventListener('scroll', onScroll)
+  }, [account])
+
+  useScrollReveal(contentRef, routeKey)
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -264,6 +305,7 @@ export default function App() {
       <div className="stage">
         <div className="device">
           <div className="viewport">
+            <Aurora />
             <main className="content">
               <VerifyScreen
                 code={route.code}
@@ -286,6 +328,7 @@ export default function App() {
       <div className="stage">
         <div className="device">
           <div className="viewport">
+            <Aurora />
             <OfflineBanner />
             <LoginScreen />
             <div id="sheet-root" className="sheet-root" />
@@ -305,11 +348,15 @@ export default function App() {
     <div className="stage">
       <div className="device">
         <div className="viewport">
+          <Aurora />
+          <span className="scroll-progress" style={{ transform: `scaleX(${scrollRatio})` }} aria-hidden="true" />
           <OfflineBanner />
           {showChrome && (
             <header className="topbar">
               <button type="button" className="brand" onClick={() => navigate('#/')}>
-                <img src="/img/logo-192.jpg" alt="" />
+                <span className="brand-halo">
+                  <img src="/img/logo-192.jpg" alt="" />
+                </span>
                 <span>
                   <strong>AfricaSkills</strong>
                   <small>Plateforme panafricaine</small>
@@ -353,11 +400,20 @@ export default function App() {
             </header>
           )}
 
-          <main ref={contentRef} className={`content ${immersive ? 'immersive' : ''}`}>{content}</main>
+          <main ref={contentRef} className={`content ${immersive ? 'immersive' : ''}`}>
+            <div key={routeKey} className="route-enter">
+              {content}
+            </div>
+          </main>
 
 
           {showChrome && (
             <nav className="bottomnav" aria-label="Navigation principale">
+              {(() => {
+                const activeIndex = TABS.findIndex((tab) => tab.id === route.tab)
+                if (activeIndex < 0) return null
+                return <span className="nav-blob" style={{ transform: `translateX(${activeIndex * 100}%)` }} aria-hidden="true" />
+              })()}
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -365,7 +421,9 @@ export default function App() {
                   className={route.tab === tab.id ? 'active' : ''}
                   onClick={() => navigate(tab.path)}
                 >
-                  <Icon name={tab.icon} size={21} />
+                  <span className="nav-icon">
+                    <Icon name={tab.icon} size={21} />
+                  </span>
                   <span>{tab.label}</span>
                 </button>
               ))}
@@ -376,6 +434,7 @@ export default function App() {
 
           <div id="sheet-root" className="sheet-root" />
           <FocusSheet open={focusOpen} onClose={() => setFocusOpen(false)} />
+          <ConfettiHost />
           <Toasts bottom={immersive ? 18 : 84} />
         </div>
       </div>

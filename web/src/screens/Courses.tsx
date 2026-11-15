@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { Btn, Card, Chip, EmptyState, Progress, SectionTitle } from '../components/ui'
+import { celebrate } from '../components/Motion'
 import { courseById, domainById, lessonsFor, seed, useApp } from '../store'
 import type { Course, Lesson } from '../types'
 
@@ -52,6 +53,7 @@ export function CoursesScreen({
     if (isCorrect) {
       const already = state.completedLessons.includes(lesson.id)
       dispatch({ type: 'COMPLETE_LESSON', lessonId: lesson.id, courseId: lesson.courseId })
+      celebrate('burst')
       notify(already ? 'Leçon déjà validée — révision enregistrée.' : 'Bonne réponse ! +50 XP')
     } else {
       notify("Réponse incorrecte. Lisez l'explication et réessayez.", true)

@@ -16,6 +16,7 @@ import {
 import { dayForPoints } from '../lib/progress'
 import { formatDateFR } from '../lib/format'
 import { verifyCertificate } from '../lib/certificate'
+import { AnimatedValue, celebrate } from '../components/Motion'
 
 /** Les dates du seed Kotlin sont figées : on affiche le jour réel où le palier a été franchi. */
 function badgeDate(
@@ -80,7 +81,7 @@ export function CertificatesScreen() {
           <span className="eyebrow">Niveau actuel</span>
           <h2>{tier ? tier.label : 'Débutant'}</h2>
           <p>
-            {state.points.toLocaleString('fr-FR')} XP · {done} cours validés · anglais{' '}
+            <AnimatedValue value={state.points} /> XP · {done} cours validés · anglais{' '}
             {state.account?.englishLevel ?? 'A1'}
           </p>
         </div>
@@ -150,6 +151,7 @@ export function CertificatesScreen() {
                     icon="award"
                     onClick={() => {
                       dispatch({ type: 'CERTIFY', courseId: item.id })
+                      celebrate('rain')
                       notify('Certificat émis et enregistré sur cet appareil.')
                     }}
                   >

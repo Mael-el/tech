@@ -16,6 +16,7 @@ import {
 import { activityWindow, accuracy } from '../lib/progress'
 import { isDue } from '../lib/sm2'
 import { factOfTheDay, themeById } from '../lib/facts'
+import { AnimatedValue } from '../components/Motion'
 
 function GoalRing({ value, goal }: { value: number; goal: number }) {
   const radius = 27
@@ -35,7 +36,9 @@ function GoalRing({ value, goal }: { value: number; goal: number }) {
         />
       </svg>
       <span className="goal-text">
-        <strong>{Math.min(value, goal)}</strong>
+        <strong>
+          <AnimatedValue value={Math.min(value, goal)} />
+        </strong>
         <small>/ {goal} XP</small>
       </span>
     </span>
@@ -107,7 +110,22 @@ export function DashboardScreen({
 
   return (
     <div className="screen">
-      <section className="hero">
+      <section
+        className="hero no-reveal"
+        onPointerMove={(event) => {
+          if (!window.matchMedia('(hover: hover)').matches) return
+          const element = event.currentTarget
+          const rect = element.getBoundingClientRect()
+          const px = (event.clientX - rect.left) / rect.width - 0.5
+          const py = (event.clientY - rect.top) / rect.height - 0.5
+          element.style.setProperty('--rx', `${(-py * 4).toFixed(2)}deg`)
+          element.style.setProperty('--ry', `${(px * 5).toFixed(2)}deg`)
+        }}
+        onPointerLeave={(event) => {
+          event.currentTarget.style.setProperty('--rx', '0deg')
+          event.currentTarget.style.setProperty('--ry', '0deg')
+        }}
+      >
         <div className="hero-glow" />
         <div className="hero-top">
           <div>
@@ -127,7 +145,7 @@ export function DashboardScreen({
           </span>
           <span className="hero-chip">
             <Icon name="sparkles" size={14} />
-            {state.points.toLocaleString('fr-FR')} XP
+            <AnimatedValue value={state.points} /> XP
           </span>
           <span className="hero-chip">
             <Icon name="book" size={14} />
@@ -139,7 +157,9 @@ export function DashboardScreen({
           <div className="hero-next">
             <div className="hero-next-head">
               <span>Prochain palier · {upcoming.label}</span>
-              <strong>{state.points.toLocaleString('fr-FR')} / {upcoming.minPoints.toLocaleString('fr-FR')} XP</strong>
+              <strong>
+                <AnimatedValue value={state.points} /> / {upcoming.minPoints.toLocaleString('fr-FR')} XP
+              </strong>
             </div>
             <Progress value={progressToNext} color="linear-gradient(90deg,#FB923C,#FACC15)" />
             <p>Encore {(upcoming.minPoints - state.points).toLocaleString('fr-FR')} XP et {Math.max(0, upcoming.minCourses - done)} cours validés.</p>

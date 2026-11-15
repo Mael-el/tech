@@ -3,6 +3,7 @@ import { Icon } from '../components/Icon'
 import { Btn, Card, EmptyState } from '../components/ui'
 import type { ApplicationStatus, ProjectStage } from '../store'
 import { useApp } from '../store'
+import { celebrate } from '../components/Motion'
 import {
   APPLICATION_STATUSES,
   JOB_BOARDS,
@@ -46,6 +47,7 @@ export function NetworkScreen() {
       return
     }
     dispatch({ type: 'ADD_APPLICATION', company, role, url: normalizeUrl(url), status })
+    celebrate('burst')
     notify(`Candidature enregistrée : ${role.trim()} — ${company.trim()}`)
     setCompany('')
     setRole('')
@@ -60,6 +62,7 @@ export function NetworkScreen() {
       return
     }
     dispatch({ type: 'ADD_PROJECT', title, note })
+    celebrate('burst')
     notify(`Projet créé : ${title.trim()}`)
     setTitle('')
     setNote('')

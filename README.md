@@ -4,7 +4,7 @@ Plateforme panafricaine d'apprentissage : cours et leçons, flashcards à répé
 badges et certificats vérifiables, suivi de candidatures et de projets personnels.
 
 - **Application Android** : Kotlin 2.2, Jetpack Compose (Material 3), Room, Coroutines/StateFlow, minSdk 24 → `app/`
-- **Port web fonctionnel** : React + Vite, mêmes données et parcours concrets, responsive 360→1600 px → `web/`
+- **Port web fonctionnel** : React + Vite, mêmes données et parcours concrets, responsive 360→1600 px, design « aurora » animé → `web/`
 - **Audit technique** du projet Android → [`ANALYSE.md`](ANALYSE.md)
 
 ## Fonctionnalités
@@ -41,7 +41,9 @@ passe local). Chaque confirmation correspond à un état réellement enregistré
 Ce qui dépasse le simple rendu : routage par URL (`#/cours/:id/:leçon`, `#/verifier/<code>`), palette
 `Ctrl+K`, notes de leçon, révision SM-2, **certificats gratuits vérifiables hors-ligne**, **suivi de
 candidatures et de projets**, **sessions de concentration**, export/import JSON, impression A4 et PWA
-hors-ligne. L'interface est responsive de 360 px à 1600 px (listes en 2 colonnes sur ordinateur).
+hors-ligne. L'interface est responsive de 360 px à 1600 px (listes en 2 colonnes sur ordinateur) et
+animée : aurores en parallaxe, révélation au défilement, compteurs, confettis, inclinaison du hero,
+reflets et transitions de route — avec respect de `prefers-reduced-motion`.
 
 Le catalogue provient du code Kotlin (`web/src/data/seed.json`, généré par
 `tools/extract_seed.py`). Les chiffres de « Vrai & vérifié » sont réels et sourcés ; les offres

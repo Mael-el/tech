@@ -72,6 +72,38 @@ Jobberman, BrighterMonday et ReliefWeb, et le suivi vous appartient.
 
 XP crédités une fois par jour et par jeu, 7 succès (+25 XP), records et pastille « défi du jour ».
 
+## Design et animations
+
+L'interface suit un langage « aurora » : fond animé en trois halos, grille qui dérive, grain, verre
+dépoli, accents jade / ambre / violet. Toutes les animations sont dans `src/design-v4.css` et
+`src/lib/motion.ts` (aucune dépendance ajoutée).
+
+| Animation | Où |
+|---|---|
+| Aurores en parallaxe + dérive lente | fond de chaque écran (`Aurora`, `useParallax`) |
+| Transition de route (fondu + montée + flou) | `route-enter`, à chaque changement d'URL |
+| Révélation au défilement en cascade | `useScrollReveal` (IntersectionObserver + MutationObserver) |
+| Compteurs qui roulent | XP, objectif, statistiques (`AnimatedValue`, `useCountUp`) |
+| Inclinaison 3D du hero au pointeur | accueil, désactivée au tactile |
+| Halo qui suit le curseur sur les cartes | `<Card>` (`--mx` / `--my`) |
+| Reflet qui balaie boutons, hero et certificat | `::after`, `heroSheen`, `certSheen` |
+| Ripple au clic | `<Btn>` |
+| Barre de progression de lecture | haut de l'écran |
+| Onglet actif qui glisse + icône qui rebondit | barre d'onglets (`nav-blob`) |
+| Toasts avec ressort et compte à rebours | `Toasts` |
+| Feuilles qui remontent avec rebond | `Sheet` |
+| Flamme qui vacille, pastille de défi qui pulse | série, arcade |
+| Shimmer sur les barres de progression | `progress-fill` |
+| Confettis (pluie ou éclat) | succès, certificat, leçon réussie, candidature, session terminée |
+| Reflet holographique du certificat | `cert-frame` |
+
+Accessibilité et performance :
+
+- `prefers-reduced-motion` coupe animations, confettis et révélations ; le contenu reste visible.
+- Les flous coûteux sont limités à la barre supérieure, la navigation et les feuilles ; les cartes
+  utilisent des fonds translucides sans `backdrop-filter`.
+- Les captures de contrôle sont faites de 360 px à 1600 px, avec mesure du débordement horizontal.
+
 ## Responsive
 
 Testé au navigateur (Chromium, captures reproductibles) de 360 px à 1600 px, sans débordement
@@ -102,9 +134,11 @@ web/
 │   ├── main.tsx               # AppProvider + service worker
 │   ├── App.tsx                # coque, routeur, onglets, palette, session de concentration, toasts
 │   ├── store.tsx              # état persistant v3, comptes locaux, dispatch
-│   ├── styles.css             # thème clair/sombre, responsive, impression
+│   ├── styles.css             # base : composants, impression
+│   ├── design-v4.css          # design « aurora » : tokens, verre, animations, responsive
 │   ├── types.ts               # types du seed
 │   ├── lib/
+│   │   ├── motion.ts          # reduced-motion, compteurs, révélation, parallaxe
 │   │   ├── sm2.ts             # SM-2 pur (testé)
 │   │   ├── progress.ts        # séries, activité, seuils, précision (testé)
 │   │   ├── certificate.ts     # émission et vérification du code (testé)
@@ -117,7 +151,7 @@ web/
 │   ├── data/seed.json         # catalogue extrait du dépôt Kotlin
 │   ├── data/facts.json        # 15 chiffres + 8 ressources + sources
 │   ├── data/arcade.json       # questions, vrai/faux, paires mémoire
-│   ├── components/            # icônes, cartes, feuilles, toasts, palette
+│   ├── components/            # icônes, cartes, feuilles, toasts, palette, Motion (confettis)
 │   └── screens/               # Login, Dashboard, Cours, Révision, Certifs, Réseau, Profil, Vrai, Arcade, Verify
 └── public/                    # logo, police, icônes PWA, service worker
 ```
